@@ -1,0 +1,15 @@
+import numpy as np
+
+# Linear
+def f(x,a,b):
+	return a*x + b
+	
+def jac(x,a,b):
+	if isinstance(x,np.ndarray):
+		b_dev=np.ones(len(x))
+	else:
+		b_dev=1
+	return np.array([x,b_dev])
+
+def hess(x,a,b):
+	return np.array([[x*0,x*0],[x*0,x*0]])

@@ -1,0 +1,10 @@
+from include.FittingRoutine import t_dist, t_dist_jac, t_dist_hess
+
+def f(x,a,mu,sigma,nu,b):
+	return t_dist(x,a,mu,sigma,nu,b)
+
+def jac(x,a,mu,sigma,nu,b):
+	return t_dist_jac(x,a,mu,sigma,nu,b)
+	
+def hess(x,a,mu,sigma,nu,b):
+	return t_dist_hess(x,a,mu,sigma,nu,b)

@@ -1,0 +1,13 @@
+from include.FittingRoutine import exp_gauss_dist, exp_gauss_dist_jac, exp_gauss_dist_hess
+
+# Exponential convolution with a Gaussian
+# Not defined for sigma / tau <= 0
+
+def f(x,a,mu,sigma,tau,b):
+	return exp_gauss_dist(x,a,mu,sigma,1/tau,b)
+	
+def jac(x,a,mu,sigma,tau,b):
+	return exp_gauss_dist_jac(x,a,mu,sigma,1/tau,b)
+	
+def hess(x,a,mu,sigma,tau,b):
+	return exp_gauss_dist_hess(x,a,mu,sigma,1/tau,b)

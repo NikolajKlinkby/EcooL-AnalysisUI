@@ -1,0 +1,10 @@
+from include.FittingRoutine import gauss_dist, gauss_dist_jac, gauss_dist_hess
+
+def f(x,a,mu,sigma,b):
+	return gauss_dist(x,a,mu,sigma,b)
+	
+def jac(x,a,mu,sigma,b):
+	return gauss_dist_jac(x,a,mu,sigma,b)
+	
+def hess(x,a,mu,sigma,b):
+	return gauss_dist_hess(x,a,mu,sigma,b)

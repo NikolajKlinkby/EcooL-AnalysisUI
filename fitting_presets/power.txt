@@ -1,0 +1,11 @@
+import numpy as np
+
+# Power
+def f(x,a,b):
+	return a*x**b
+	
+def jac(x,a,b):
+	return np.array([x**b,a*(x)**(b)*np.log(x)])
+	
+def hess(x,a,b):
+	return np.array([[x*0,(x)**(b)*np.log(x)],[(x)**(b)*np.log(x),(x)**(b)*np.log(x)^2]])
