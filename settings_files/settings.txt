@@ -1,1 +1,1 @@
-{"depletion_flag": "ADC.Photodiode", "depletion_low": ["0", "100"], "depletion_high": ["100", "10000"], "max_TDC_chanels": "3125000", "folder_path": "/home/nikolaj/Documents/Master Thesis/PythonUI/Data/HBDI+"}
+{"depletion_flag": "ADC.Photodiode", "depletion_low": ["0", "100"], "depletion_high": ["100", "10000"], "max_TDC_chanels": "3125000", "folder_path": "/home/nikolaj/Documents/Master Thesis/PythonUI/Data/#9"}

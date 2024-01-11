@@ -4,25 +4,31 @@
 saturation = float(self.satentry.get())
 photon = float(self.photonentry.get())
 
+edges = np.array(self.root.histogram['edges'][:-1]) + (self.root.histogram['edges'][1] + self.root.histogram['edges'][0])/2
+
 # Background mask
-back_mask = np.ones(len(self.root.histogram['edges'][:-1]), dtype=bool)
+back_mask = np.ones(len(edges), dtype=bool)
 for back in self.container.windows.entries_back:
 	if back[0]['text'] == self.back_det_men_var.get():
-		back_mask = back_mask * (np.array(self.root.histogram['edges'])[:-1] > float(back[1].get())*1e+3) * (np.array(self.root.histogram['edges'][:-1]) < float(back[2].get())*1e+3)
+		back_mask = back_mask * (edges > float(back[1].get())*1e+3) * (edges < float(back[2].get())*1e+3)
 
+scan_key = self.root.histogram['scan_key']
+all_scan_steps = np.array(self.root.parameters[self.root.histogram['scan_key']])
+scan_steps = np.unique(all_scan_steps)
+laser_pw = np.array(self.root.parameters['ADC.Laser_pw'])
 
 for win in self.container.windows.entries:
 	# Window masks
-	window_mask = np.ones(len(self.root.histogram['edges'][:-1]), dtype=bool)
-	window_mask = window_mask * (np.array(self.root.histogram['edges'][:-1]) > float(win[2].get())*1e+3) * (np.array(self.root.histogram['edges'][:-1]) < float(win[3].get())*1e+3)
+	window_mask = np.ones(len(edges), dtype=bool)
+	window_mask = window_mask * (edges > float(win[2].get())*1e+3) * (edges < float(win[3].get())*1e+3)
 
 	signal = []
 	signal_err = []
 	
-	for step in np.unique(self.root.parameters[self.root.histogram['scan_key']]):
-		print(time.strftime('%H:%M:%S', time.gmtime())+' '+self.root.histogram['scan_key']+f' step {step}')
+	for step in scan_steps:
+		print(time.strftime('%H:%M:%S', time.gmtime())+' '+scan_key+f' step {step}')
 
-		step_mask = (np.array(self.root.parameters[self.root.histogram['scan_key']]) == step)
+		step_mask = (all_scan_steps == step)
 
 		'''			Calculate			'''
 

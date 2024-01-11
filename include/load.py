@@ -1083,6 +1083,7 @@ def load_histogram(runs, nr_bins=1000, write=None, overwrite=False, silent = Fal
                 hist_struct['scan_key'] = scan_key
 
                 TDC_res = data['TDC.res']
+                unique_scan_steps = np.unique(flatten_list(data[scan_key]))
                 
                 if np.any(np.array(hist_limits) == None): 
                     # Manually modified variable to set histogram size if not given
@@ -1097,37 +1098,39 @@ def load_histogram(runs, nr_bins=1000, write=None, overwrite=False, silent = Fal
                     # Dont add time to Parameters
                     if 'TDC1' in key and key not in hist_struct['time_keys']:
                         hist_struct['time_keys'].append(key)
+                time_keys = hist_struct['time_keys']
                 
+                #edge of bins
+                edges = np.arange(hist_limits[0], ADC_bit*(1+1/int_nr_bins), (ADC_bit-hist_limits[0])/int_nr_bins)
+                hist_struct['edges'] = edges
+
                 # Add to histogram struct if it does not exist 
                 if not loaded_hist_struct:
-                    
-                    #edge of bins
-                    hist_struct['edges'] = np.arange(hist_limits[0], ADC_bit*(1+1/int_nr_bins), (ADC_bit-hist_limits[0])/int_nr_bins)
 
                     # Accumulated
                     if not reading:
-                        for key in hist_struct['time_keys']:
+                        for key in time_keys:
                             if scan_key == 'Wavelength_ctr' or scan_key == 'Requested Transmission_ctr':
-                                hist_struct[key+'_hist_0_acc'] = np.zeros(len(hist_struct['edges'])-1)
-                                hist_struct[key+'_hist_1_acc'] = np.zeros(len(hist_struct['edges'])-1)
+                                hist_struct[key+'_hist_0_acc'] = np.zeros(len(edges)-1)
+                                hist_struct[key+'_hist_1_acc'] = np.zeros(len(edges)-1)
                             else:
-                                hist_struct[key+'_hist_0_0_acc'] = np.zeros(len(hist_struct['edges'])-1)
-                                hist_struct[key+'_hist_0_1_acc'] = np.zeros(len(hist_struct['edges'])-1)
-                                hist_struct[key+'_hist_1_0_acc'] = np.zeros(len(hist_struct['edges'])-1)
-                                hist_struct[key+'_hist_1_1_acc'] = np.zeros(len(hist_struct['edges'])-1)
+                                hist_struct[key+'_hist_0_0_acc'] = np.zeros(len(edges)-1)
+                                hist_struct[key+'_hist_0_1_acc'] = np.zeros(len(edges)-1)
+                                hist_struct[key+'_hist_1_0_acc'] = np.zeros(len(edges)-1)
+                                hist_struct[key+'_hist_1_1_acc'] = np.zeros(len(edges)-1)
                         reading = True
 
                     # Checking uniqe scan_steps values and adding them to struct
-                    for scan_steps in np.unique(flatten_list(data[scan_key])):
+                    for scan_steps in unique_scan_steps:
                         
                         # Add to histogram struct if it does not exist
-                        for key in hist_struct['time_keys']:
+                        for key in time_keys:
 
                             if scan_key == 'Wavelength_ctr' or scan_key == 'Requested Transmission_ctr':
                                 if key+'_hist_0_'+str(scan_steps) not in hist_struct.keys():
                                     # individual
-                                    hist_struct[key+'_hist_0_'+str(scan_steps)] = np.zeros(len(hist_struct['edges'])-1)
-                                    hist_struct[key+'_hist_1_'+str(scan_steps)] = np.zeros(len(hist_struct['edges'])-1)
+                                    hist_struct[key+'_hist_0_'+str(scan_steps)] = np.zeros(len(edges)-1)
+                                    hist_struct[key+'_hist_1_'+str(scan_steps)] = np.zeros(len(edges)-1)
                                     
                                     # steps
                                     hist_struct[key+'_hist_0_event_'+str(scan_steps)] = 0
@@ -1135,10 +1138,10 @@ def load_histogram(runs, nr_bins=1000, write=None, overwrite=False, silent = Fal
                             else:
                                 if key+'_hist_0_0_'+str(scan_steps) not in hist_struct.keys():
                                     # individual
-                                    hist_struct[key+'_hist_0_0_'+str(scan_steps)] = np.zeros(len(hist_struct['edges'])-1)
-                                    hist_struct[key+'_hist_1_0_'+str(scan_steps)] = np.zeros(len(hist_struct['edges'])-1)
-                                    hist_struct[key+'_hist_0_1_'+str(scan_steps)] = np.zeros(len(hist_struct['edges'])-1)
-                                    hist_struct[key+'_hist_1_1_'+str(scan_steps)] = np.zeros(len(hist_struct['edges'])-1)
+                                    hist_struct[key+'_hist_0_0_'+str(scan_steps)] = np.zeros(len(edges)-1)
+                                    hist_struct[key+'_hist_1_0_'+str(scan_steps)] = np.zeros(len(edges)-1)
+                                    hist_struct[key+'_hist_0_1_'+str(scan_steps)] = np.zeros(len(edges)-1)
+                                    hist_struct[key+'_hist_1_1_'+str(scan_steps)] = np.zeros(len(edges)-1)
                                     
                                     # steps
                                     hist_struct[key+'_hist_0_0_event_'+str(scan_steps)] = 0
@@ -1190,29 +1193,31 @@ def load_histogram(runs, nr_bins=1000, write=None, overwrite=False, silent = Fal
                     # Histogram structure
                     if not loaded_hist_struct:
                         
-                        for key in hist_struct['time_keys']:
+                        for key in time_keys:
 
-                            hist_struct[key+f'_hist_{1}_acc'] = hist_struct[key+f'_hist_{1}_acc'] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[mask[0]]]), hist_struct['edges'])[0]
-                            hist_struct[key+f'_hist_{0}_acc'] = hist_struct[key+f'_hist_{0}_acc'] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[mask[1]]]), hist_struct['edges'])[0]
+                            data_arr = np.array(data[key],dtype=object)
+
+                            hist_struct[key+f'_hist_{1}_acc'] = hist_struct[key+f'_hist_{1}_acc'] + np.histogram(flatten_list(data_arr[mask_index[mask[0]]]), edges)[0]
+                            hist_struct[key+f'_hist_{0}_acc'] = hist_struct[key+f'_hist_{0}_acc'] + np.histogram(flatten_list(data_arr[mask_index[mask[1]]]), edges)[0]
                             
                             for i in range(len(scan_steps)):
                                 t0 = time.time()
                                 
                                 if i == len(scan_steps) - 1:
                                     
-                                    hist_struct[key+f'_hist_{1}_'+str(scan_steps[i])] = hist_struct[key+f'_hist_{1}_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[0][sort_index][start_index[i]:]]]), hist_struct['edges'])[0]
-                                    hist_struct[key+f'_hist_{0}_'+str(scan_steps[i])] = hist_struct[key+f'_hist_{0}_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[1][sort_index][start_index[i]:]]]), hist_struct['edges'])[0]
+                                    hist_struct[key+f'_hist_{1}_'+str(scan_steps[i])] = hist_struct[key+f'_hist_{1}_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:][mask[0][sort_index][start_index[i]:]]]), edges)[0]
+                                    hist_struct[key+f'_hist_{0}_'+str(scan_steps[i])] = hist_struct[key+f'_hist_{0}_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:][mask[1][sort_index][start_index[i]:]]]), edges)[0]
 
-                                    hist_struct[key+'_hist_1_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[0][sort_index][start_index[i]:]]])
-                                    hist_struct[key+'_hist_0_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[1][sort_index][start_index[i]:]]])
+                                    hist_struct[key+'_hist_1_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:][mask[0][sort_index][start_index[i]:]]])
+                                    hist_struct[key+'_hist_0_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:][mask[1][sort_index][start_index[i]:]]])
 
                                 else:
                                     
-                                    hist_struct[key+f'_hist_{1}_'+str(scan_steps[i])] = hist_struct[key+f'_hist_{1}_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[0][sort_index][start_index[i]:start_index[i+1]]]]), hist_struct['edges'])[0]
-                                    hist_struct[key+f'_hist_{0}_'+str(scan_steps[i])] = hist_struct[key+f'_hist_{0}_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[1][sort_index][start_index[i]:start_index[i+1]]]]), hist_struct['edges'])[0]
+                                    hist_struct[key+f'_hist_{1}_'+str(scan_steps[i])] = hist_struct[key+f'_hist_{1}_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[0][sort_index][start_index[i]:start_index[i+1]]]]), edges)[0]
+                                    hist_struct[key+f'_hist_{0}_'+str(scan_steps[i])] = hist_struct[key+f'_hist_{0}_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[1][sort_index][start_index[i]:start_index[i+1]]]]), edges)[0]
 
-                                    hist_struct[key+'_hist_1_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[0][sort_index][start_index[i]:start_index[i+1]]]])
-                                    hist_struct[key+'_hist_0_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[1][sort_index][start_index[i]:start_index[i+1]]]])
+                                    hist_struct[key+'_hist_1_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[0][sort_index][start_index[i]:start_index[i+1]]]])
+                                    hist_struct[key+'_hist_0_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[1][sort_index][start_index[i]:start_index[i+1]]]])
 
                                 # Time tracking
                                 time_avg = (time_int*time_avg + time.time()-t0) / (time_int+1)
@@ -1227,37 +1232,39 @@ def load_histogram(runs, nr_bins=1000, write=None, overwrite=False, silent = Fal
                         
                         for key in hist_struct['time_keys']:
 
-                            hist_struct[key+f'_hist_1_1_acc'] = hist_struct[key+f'_hist_1_1_acc'] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[mask[0]]]), hist_struct['edges'])[0]
-                            hist_struct[key+f'_hist_1_0_acc'] = hist_struct[key+f'_hist_1_0_acc'] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[mask[1]]]), hist_struct['edges'])[0]
-                            hist_struct[key+f'_hist_0_1_acc'] = hist_struct[key+f'_hist_0_1_acc'] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[mask[2]]]), hist_struct['edges'])[0]
-                            hist_struct[key+f'_hist_0_0_acc'] = hist_struct[key+f'_hist_0_0_acc'] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[mask[3]]]), hist_struct['edges'])[0]
+                            data_arr = np.array(data[key],dtype=object)
+
+                            hist_struct[key+f'_hist_1_1_acc'] = hist_struct[key+f'_hist_1_1_acc'] + np.histogram(flatten_list(data_arr[mask_index[mask[0]]]), edges)[0]
+                            hist_struct[key+f'_hist_1_0_acc'] = hist_struct[key+f'_hist_1_0_acc'] + np.histogram(flatten_list(data_arr[mask_index[mask[1]]]), edges)[0]
+                            hist_struct[key+f'_hist_0_1_acc'] = hist_struct[key+f'_hist_0_1_acc'] + np.histogram(flatten_list(data_arr[mask_index[mask[2]]]), edges)[0]
+                            hist_struct[key+f'_hist_0_0_acc'] = hist_struct[key+f'_hist_0_0_acc'] + np.histogram(flatten_list(data_arr[mask_index[mask[3]]]), edges)[0]
 
                             for i in range(len(scan_steps)):
                                 t0 = time.time()
                                 
                                 if i == len(scan_steps) - 1:
                                     
-                                    hist_struct[key+f'_hist_1_1_'+str(scan_steps[i])] = hist_struct[key+f'_hist_1_1_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[0][sort_index][start_index[i]:]]]), hist_struct['edges'])[0]
-                                    hist_struct[key+f'_hist_1_0_'+str(scan_steps[i])] = hist_struct[key+f'_hist_1_0_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[1][sort_index][start_index[i]:]]]), hist_struct['edges'])[0]
-                                    hist_struct[key+f'_hist_0_1_'+str(scan_steps[i])] = hist_struct[key+f'_hist_0_1_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[2][sort_index][start_index[i]:]]]), hist_struct['edges'])[0]
-                                    hist_struct[key+f'_hist_0_0_'+str(scan_steps[i])] = hist_struct[key+f'_hist_0_0_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[3][sort_index][start_index[i]:]]]), hist_struct['edges'])[0]
+                                    hist_struct[key+f'_hist_1_1_'+str(scan_steps[i])] = hist_struct[key+f'_hist_1_1_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:][mask[0][sort_index][start_index[i]:]]]), edges)[0]
+                                    hist_struct[key+f'_hist_1_0_'+str(scan_steps[i])] = hist_struct[key+f'_hist_1_0_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:][mask[1][sort_index][start_index[i]:]]]), edges)[0]
+                                    hist_struct[key+f'_hist_0_1_'+str(scan_steps[i])] = hist_struct[key+f'_hist_0_1_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:][mask[2][sort_index][start_index[i]:]]]), edges)[0]
+                                    hist_struct[key+f'_hist_0_0_'+str(scan_steps[i])] = hist_struct[key+f'_hist_0_0_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:][mask[3][sort_index][start_index[i]:]]]), edges)[0]
 
-                                    hist_struct[key+'_hist_1_1_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[0][sort_index][start_index[i]:]]])
-                                    hist_struct[key+'_hist_1_0_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[1][sort_index][start_index[i]:]]])
-                                    hist_struct[key+'_hist_0_1_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[2][sort_index][start_index[i]:]]])
-                                    hist_struct[key+'_hist_0_0_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[3][sort_index][start_index[i]:]]])
+                                    hist_struct[key+'_hist_1_1_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:][mask[0][sort_index][start_index[i]:]]])
+                                    hist_struct[key+'_hist_1_0_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:][mask[1][sort_index][start_index[i]:]]])
+                                    hist_struct[key+'_hist_0_1_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:][mask[2][sort_index][start_index[i]:]]])
+                                    hist_struct[key+'_hist_0_0_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:][mask[3][sort_index][start_index[i]:]]])
 
                                 else:
                                     
-                                    hist_struct[key+f'_hist_1_1_'+str(scan_steps[i])] = hist_struct[key+f'_hist_1_1_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[0][sort_index][start_index[i]:start_index[i+1]]]]), hist_struct['edges'])[0]
-                                    hist_struct[key+f'_hist_1_0_'+str(scan_steps[i])] = hist_struct[key+f'_hist_1_0_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[1][sort_index][start_index[i]:start_index[i+1]]]]), hist_struct['edges'])[0]
-                                    hist_struct[key+f'_hist_0_1_'+str(scan_steps[i])] = hist_struct[key+f'_hist_0_1_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[2][sort_index][start_index[i]:start_index[i+1]]]]), hist_struct['edges'])[0]
-                                    hist_struct[key+f'_hist_0_0_'+str(scan_steps[i])] = hist_struct[key+f'_hist_0_0_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[3][sort_index][start_index[i]:start_index[i+1]]]]), hist_struct['edges'])[0]
+                                    hist_struct[key+f'_hist_1_1_'+str(scan_steps[i])] = hist_struct[key+f'_hist_1_1_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[0][sort_index][start_index[i]:start_index[i+1]]]]), edges)[0]
+                                    hist_struct[key+f'_hist_1_0_'+str(scan_steps[i])] = hist_struct[key+f'_hist_1_0_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[1][sort_index][start_index[i]:start_index[i+1]]]]), edges)[0]
+                                    hist_struct[key+f'_hist_0_1_'+str(scan_steps[i])] = hist_struct[key+f'_hist_0_1_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[2][sort_index][start_index[i]:start_index[i+1]]]]), edges)[0]
+                                    hist_struct[key+f'_hist_0_0_'+str(scan_steps[i])] = hist_struct[key+f'_hist_0_0_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[3][sort_index][start_index[i]:start_index[i+1]]]]), edges)[0]
 
-                                    hist_struct[key+'_hist_1_1_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[0][sort_index][start_index[i]:start_index[i+1]]]])
-                                    hist_struct[key+'_hist_1_0_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[1][sort_index][start_index[i]:start_index[i+1]]]])
-                                    hist_struct[key+'_hist_0_1_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[2][sort_index][start_index[i]:start_index[i+1]]]])
-                                    hist_struct[key+'_hist_0_0_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[3][sort_index][start_index[i]:start_index[i+1]]]])
+                                    hist_struct[key+'_hist_1_1_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[0][sort_index][start_index[i]:start_index[i+1]]]])
+                                    hist_struct[key+'_hist_1_0_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[1][sort_index][start_index[i]:start_index[i+1]]]])
+                                    hist_struct[key+'_hist_0_1_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[2][sort_index][start_index[i]:start_index[i+1]]]])
+                                    hist_struct[key+'_hist_0_0_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[3][sort_index][start_index[i]:start_index[i+1]]]])
 
                                 # Time tracking
                                 time_avg = (time_int*time_avg + time.time()-t0) / (time_int+1)
@@ -1269,7 +1276,7 @@ def load_histogram(runs, nr_bins=1000, write=None, overwrite=False, silent = Fal
                 data.clear()
     
     if not loaded_hist_struct:
-        hist_struct['edges'] = hist_struct['edges'] * TDC_res
+        hist_struct['edges'] = edges * TDC_res
     
     if write != None:
         
@@ -1333,7 +1340,8 @@ def update_histogram(dat_files, files_to_load, write, nr_bins = 1000, silent = F
                 else:
                     ADC_bit = hist_limits[-1] + 1
 
-                hist_struct['edges'] = np.array(hist_struct['edges']) / TDC_res
+                edges = np.array(hist_struct['edges']) / TDC_res
+                hist_struct['edges'] = edges
 
                 int_nr_bins = int(TDC_res*(ADC_bit-hist_limits[0])/nr_bins)
 
@@ -1352,8 +1360,8 @@ def update_histogram(dat_files, files_to_load, write, nr_bins = 1000, silent = F
                         if scan_key == 'Wavelength_ctr' or scan_key == 'Requested Transmission_ctr':
                             if key+'_hist_0_'+str(scan_steps) not in hist_struct.keys():
                                 # individual
-                                hist_struct[key+'_hist_0_'+str(scan_steps)] = np.zeros(len(hist_struct['edges'])-1)
-                                hist_struct[key+'_hist_1_'+str(scan_steps)] = np.zeros(len(hist_struct['edges'])-1)
+                                hist_struct[key+'_hist_0_'+str(scan_steps)] = np.zeros(len(edges)-1)
+                                hist_struct[key+'_hist_1_'+str(scan_steps)] = np.zeros(len(edges)-1)
                                 
                                 # steps
                                 hist_struct[key+'_hist_0_event_'+str(scan_steps)] = 0
@@ -1361,10 +1369,10 @@ def update_histogram(dat_files, files_to_load, write, nr_bins = 1000, silent = F
                         else:
                             if key+'_hist_0_0_'+str(scan_steps) not in hist_struct.keys():
                                 # individual
-                                hist_struct[key+'_hist_0_0_'+str(scan_steps)] = np.zeros(len(hist_struct['edges'])-1)
-                                hist_struct[key+'_hist_1_0_'+str(scan_steps)] = np.zeros(len(hist_struct['edges'])-1)
-                                hist_struct[key+'_hist_0_1_'+str(scan_steps)] = np.zeros(len(hist_struct['edges'])-1)
-                                hist_struct[key+'_hist_1_1_'+str(scan_steps)] = np.zeros(len(hist_struct['edges'])-1)
+                                hist_struct[key+'_hist_0_0_'+str(scan_steps)] = np.zeros(len(edges)-1)
+                                hist_struct[key+'_hist_1_0_'+str(scan_steps)] = np.zeros(len(edges)-1)
+                                hist_struct[key+'_hist_0_1_'+str(scan_steps)] = np.zeros(len(edges)-1)
+                                hist_struct[key+'_hist_1_1_'+str(scan_steps)] = np.zeros(len(edges)-1)
                                 
                                 # steps
                                 hist_struct[key+'_hist_0_0_event_'+str(scan_steps)] = 0
@@ -1416,27 +1424,29 @@ def update_histogram(dat_files, files_to_load, write, nr_bins = 1000, silent = F
                     # Histogram structure
                     for key in hist_struct['time_keys']:
 
-                        hist_struct[key+f'_hist_{1}_acc'] = hist_struct[key+f'_hist_{1}_acc'] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[mask[0]]]), hist_struct['edges'])[0]
-                        hist_struct[key+f'_hist_{0}_acc'] = hist_struct[key+f'_hist_{0}_acc'] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[mask[1]]]), hist_struct['edges'])[0]
+                        data_arr = np.array(data[key],dtype=object)
+
+                        hist_struct[key+f'_hist_{1}_acc'] = hist_struct[key+f'_hist_{1}_acc'] + np.histogram(flatten_list(data_arr[mask_index[mask[0]]]), edges)[0]
+                        hist_struct[key+f'_hist_{0}_acc'] = hist_struct[key+f'_hist_{0}_acc'] + np.histogram(flatten_list(data_arr[mask_index[mask[1]]]), edges)[0]
 
                         for i in range(len(scan_steps)):
                             t0 = time.time()
                             
                             if i == len(scan_steps) - 1:
                                 
-                                hist_struct[key+f'_hist_{1}_'+str(scan_steps[i])] = hist_struct[key+f'_hist_{1}_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[0][sort_index][start_index[i]:]]]), hist_struct['edges'])[0]
-                                hist_struct[key+f'_hist_{0}_'+str(scan_steps[i])] = hist_struct[key+f'_hist_{0}_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[1][sort_index][start_index[i]:]]]), hist_struct['edges'])[0]
+                                hist_struct[key+f'_hist_{1}_'+str(scan_steps[i])] = hist_struct[key+f'_hist_{1}_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:][mask[0][sort_index][start_index[i]:]]]), edges)[0]
+                                hist_struct[key+f'_hist_{0}_'+str(scan_steps[i])] = hist_struct[key+f'_hist_{0}_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:][mask[1][sort_index][start_index[i]:]]]), edges)[0]
 
-                                hist_struct[key+'_hist_1_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[0][sort_index][start_index[i]:]]])
-                                hist_struct[key+'_hist_0_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[1][sort_index][start_index[i]:]]])
+                                hist_struct[key+'_hist_1_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:][mask[0][sort_index][start_index[i]:]]])
+                                hist_struct[key+'_hist_0_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:][mask[1][sort_index][start_index[i]:]]])
 
                             else:
                                 
-                                hist_struct[key+f'_hist_{1}_'+str(scan_steps[i])] = hist_struct[key+f'_hist_{1}_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[0][sort_index][start_index[i]:start_index[i+1]]]]), hist_struct['edges'])[0]
-                                hist_struct[key+f'_hist_{0}_'+str(scan_steps[i])] = hist_struct[key+f'_hist_{0}_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[1][sort_index][start_index[i]:start_index[i+1]]]]), hist_struct['edges'])[0]
+                                hist_struct[key+f'_hist_{1}_'+str(scan_steps[i])] = hist_struct[key+f'_hist_{1}_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[0][sort_index][start_index[i]:start_index[i+1]]]]), edges)[0]
+                                hist_struct[key+f'_hist_{0}_'+str(scan_steps[i])] = hist_struct[key+f'_hist_{0}_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[1][sort_index][start_index[i]:start_index[i+1]]]]), edges)[0]
 
-                                hist_struct[key+'_hist_1_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[0][sort_index][start_index[i]:start_index[i+1]]]])
-                                hist_struct[key+'_hist_0_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[1][sort_index][start_index[i]:start_index[i+1]]]])
+                                hist_struct[key+'_hist_1_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[0][sort_index][start_index[i]:start_index[i+1]]]])
+                                hist_struct[key+'_hist_0_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[1][sort_index][start_index[i]:start_index[i+1]]]])
 
 
                             # Time tracking
@@ -1450,37 +1460,39 @@ def update_histogram(dat_files, files_to_load, write, nr_bins = 1000, silent = F
                     # Histogram structure
                     for key in hist_struct['time_keys']:
 
-                        hist_struct[key+f'_hist_1_1_acc'] = hist_struct[key+f'_hist_1_1_acc'] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[mask[0]]]), hist_struct['edges'])[0]
-                        hist_struct[key+f'_hist_1_0_acc'] = hist_struct[key+f'_hist_1_0_acc'] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[mask[1]]]), hist_struct['edges'])[0]
-                        hist_struct[key+f'_hist_0_1_acc'] = hist_struct[key+f'_hist_0_1_acc'] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[mask[2]]]), hist_struct['edges'])[0]
-                        hist_struct[key+f'_hist_0_0_acc'] = hist_struct[key+f'_hist_0_0_acc'] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[mask[3]]]), hist_struct['edges'])[0]
+                        data_arr = np.array(data[key],dtype=object)
+
+                        hist_struct[key+f'_hist_1_1_acc'] = hist_struct[key+f'_hist_1_1_acc'] + np.histogram(flatten_list(data_arr[mask_index[mask[0]]]), edges)[0]
+                        hist_struct[key+f'_hist_1_0_acc'] = hist_struct[key+f'_hist_1_0_acc'] + np.histogram(flatten_list(data_arr[mask_index[mask[1]]]), edges)[0]
+                        hist_struct[key+f'_hist_0_1_acc'] = hist_struct[key+f'_hist_0_1_acc'] + np.histogram(flatten_list(data_arr[mask_index[mask[2]]]), edges)[0]
+                        hist_struct[key+f'_hist_0_0_acc'] = hist_struct[key+f'_hist_0_0_acc'] + np.histogram(flatten_list(data_arr[mask_index[mask[3]]]), edges)[0]
 
                         for i in range(len(scan_steps)):
                             t0 = time.time()
                             
                             if i == len(scan_steps) - 1:
                                 
-                                hist_struct[key+f'_hist_1_1_'+str(scan_steps[i])] = hist_struct[key+f'_hist_1_1_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[0][sort_index][start_index[i]:]]]), hist_struct['edges'])[0]
-                                hist_struct[key+f'_hist_1_0_'+str(scan_steps[i])] = hist_struct[key+f'_hist_1_0_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[1][sort_index][start_index[i]:]]]), hist_struct['edges'])[0]
-                                hist_struct[key+f'_hist_0_1_'+str(scan_steps[i])] = hist_struct[key+f'_hist_0_1_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[2][sort_index][start_index[i]:]]]), hist_struct['edges'])[0]
-                                hist_struct[key+f'_hist_0_0_'+str(scan_steps[i])] = hist_struct[key+f'_hist_0_0_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[3][sort_index][start_index[i]:]]]), hist_struct['edges'])[0]
+                                hist_struct[key+f'_hist_1_1_'+str(scan_steps[i])] = hist_struct[key+f'_hist_1_1_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:][mask[0][sort_index][start_index[i]:]]]), edges)[0]
+                                hist_struct[key+f'_hist_1_0_'+str(scan_steps[i])] = hist_struct[key+f'_hist_1_0_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:][mask[1][sort_index][start_index[i]:]]]), edges)[0]
+                                hist_struct[key+f'_hist_0_1_'+str(scan_steps[i])] = hist_struct[key+f'_hist_0_1_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:][mask[2][sort_index][start_index[i]:]]]), edges)[0]
+                                hist_struct[key+f'_hist_0_0_'+str(scan_steps[i])] = hist_struct[key+f'_hist_0_0_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:][mask[3][sort_index][start_index[i]:]]]), edges)[0]
 
-                                hist_struct[key+'_hist_1_1_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[0][sort_index][start_index[i]:]]])
-                                hist_struct[key+'_hist_1_0_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[1][sort_index][start_index[i]:]]])
-                                hist_struct[key+'_hist_0_1_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[2][sort_index][start_index[i]:]]])
-                                hist_struct[key+'_hist_0_0_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:][mask[3][sort_index][start_index[i]:]]])
+                                hist_struct[key+'_hist_1_1_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:][mask[0][sort_index][start_index[i]:]]])
+                                hist_struct[key+'_hist_1_0_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:][mask[1][sort_index][start_index[i]:]]])
+                                hist_struct[key+'_hist_0_1_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:][mask[2][sort_index][start_index[i]:]]])
+                                hist_struct[key+'_hist_0_0_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:][mask[3][sort_index][start_index[i]:]]])
 
                             else:
                                 
-                                hist_struct[key+f'_hist_1_1_'+str(scan_steps[i])] = hist_struct[key+f'_hist_1_1_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[0][sort_index][start_index[i]:start_index[i+1]]]]), hist_struct['edges'])[0]
-                                hist_struct[key+f'_hist_1_0_'+str(scan_steps[i])] = hist_struct[key+f'_hist_1_0_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[1][sort_index][start_index[i]:start_index[i+1]]]]), hist_struct['edges'])[0]
-                                hist_struct[key+f'_hist_0_1_'+str(scan_steps[i])] = hist_struct[key+f'_hist_0_1_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[2][sort_index][start_index[i]:start_index[i+1]]]]), hist_struct['edges'])[0]
-                                hist_struct[key+f'_hist_0_0_'+str(scan_steps[i])] = hist_struct[key+f'_hist_0_0_'+str(scan_steps[i])] + np.histogram(flatten_list(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[3][sort_index][start_index[i]:start_index[i+1]]]]), hist_struct['edges'])[0]
+                                hist_struct[key+f'_hist_1_1_'+str(scan_steps[i])] = hist_struct[key+f'_hist_1_1_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[0][sort_index][start_index[i]:start_index[i+1]]]]), edges)[0]
+                                hist_struct[key+f'_hist_1_0_'+str(scan_steps[i])] = hist_struct[key+f'_hist_1_0_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[1][sort_index][start_index[i]:start_index[i+1]]]]), edges)[0]
+                                hist_struct[key+f'_hist_0_1_'+str(scan_steps[i])] = hist_struct[key+f'_hist_0_1_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[2][sort_index][start_index[i]:start_index[i+1]]]]), edges)[0]
+                                hist_struct[key+f'_hist_0_0_'+str(scan_steps[i])] = hist_struct[key+f'_hist_0_0_'+str(scan_steps[i])] + np.histogram(flatten_list(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[3][sort_index][start_index[i]:start_index[i+1]]]]), edges)[0]
 
-                                hist_struct[key+'_hist_1_1_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[0][sort_index][start_index[i]:start_index[i+1]]]])
-                                hist_struct[key+'_hist_1_0_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[1][sort_index][start_index[i]:start_index[i+1]]]])
-                                hist_struct[key+'_hist_0_1_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[2][sort_index][start_index[i]:start_index[i+1]]]])
-                                hist_struct[key+'_hist_0_0_event_'+str(scan_steps[i])] += len(np.array(data[key],dtype=object)[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[3][sort_index][start_index[i]:start_index[i+1]]]])
+                                hist_struct[key+'_hist_1_1_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[0][sort_index][start_index[i]:start_index[i+1]]]])
+                                hist_struct[key+'_hist_1_0_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[1][sort_index][start_index[i]:start_index[i+1]]]])
+                                hist_struct[key+'_hist_0_1_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[2][sort_index][start_index[i]:start_index[i+1]]]])
+                                hist_struct[key+'_hist_0_0_event_'+str(scan_steps[i])] += len(data_arr[mask_index[sort_index][start_index[i]:start_index[i+1]][mask[3][sort_index][start_index[i]:start_index[i+1]]]])
 
 
                             # Time tracking
