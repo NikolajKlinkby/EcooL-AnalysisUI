@@ -604,7 +604,7 @@ class results_frame(tk.LabelFrame):
             ax.legend(loc=1)
             
             if i != len(item.figure.fig.axes)-1:
-                ax.get_shared_x_axes().join(ax, item.figure.fig.axes[-1])
+                ax.sharex(item.figure.fig.axes[-1])
                 ax.set_xticklabels([])
             
             ax.grid(visible=True, which='major', axis='both', color='gray', alpha=0.5, linestyle='-')

@@ -473,7 +473,7 @@ class fittingtool(tk.Toplevel):
             handles.append(patch) 
             ax1.legend(handles=handles,loc = 1)
 
-        ax1.get_shared_x_axes().join(ax1, ax2)
+        ax1.sharex(ax2)
         ax1.set_xticklabels([])
         ax1.minorticks_on()
         ax1.grid(visible=True, which='major', axis='both', color='gray', alpha=0.5, linestyle='-')
