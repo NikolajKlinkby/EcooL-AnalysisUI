@@ -13,6 +13,7 @@ import traceback
 from inspect import signature
 from inspect import getfullargspec
 from src.FittingRoutine import FittingRoutine
+import platform
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import (
@@ -32,7 +33,21 @@ class NumpyEncoder(json.JSONEncoder):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
-    
+
+def os_format_string(string):
+    _string = string.split('/')
+    if platform.system() == 'Windows':
+        string = ''
+        for s in _string:
+            string = os.path.join(string, s)
+        if string[1] == ':':
+            string = string[:2] + os.path.sep + string[2:]
+    else:
+        string = '/'
+        for s in _string:
+            string = os.path.join(string, s)
+    return string
+
 class results_frame(tk.LabelFrame):
     def __init__(self, container, root, *args, **kwargs):
         super().__init__(container, *args, **kwargs)
@@ -605,7 +620,6 @@ class results_frame(tk.LabelFrame):
             
             if i != len(item.figure.fig.axes)-1:
                 ax.sharex(item.figure.fig.axes[-1])
-                ax.set_xticklabels([])
             
             ax.grid(visible=True, which='major', axis='both', color='gray', alpha=0.5, linestyle='-')
             ax.grid(visible=True, which='minor', axis='both', color='gray', alpha=0.3, linestyle='--')
@@ -621,12 +635,12 @@ class results_frame(tk.LabelFrame):
         item.figure.canvas.draw()
 
         # Write plotdict
-        f = open(self.root.folder_path+'/'+self.root.run_choosen+'/PythonAnalysis/plotdict.txt', 'w')
+        f = open(os_format_string(self.root.folder_path+'/'+self.root.run_choosen+'/PythonAnalysis/plotdict.txt'), 'w')
         f.write(json.dumps(self.root.plotdict, cls=NumpyEncoder))
         f.close()
 
         # Write txt file
-        f = open(self.root.folder_path+'/'+self.root.run_choosen+'/PythonAnalysis/plot.txt', 'w')
+        f = open(os_format_string(self.root.folder_path+'/'+self.root.run_choosen+'/PythonAnalysis/plot.txt'), 'w')
         
         f.write('x'.rstrip('\n'))
         for key in self.root.plotdict.keys():
@@ -891,7 +905,7 @@ class results_frame(tk.LabelFrame):
             if not self.cont:
                 return
             
-            f = open(os.getcwd()+'/settings_files/'+self.name_of_file+'.txt', "w")
+            f = open(os_format_string(os.getcwd()+'/settings_files/'+self.name_of_file+'.txt'), "w")
             for entry in self.entries:
                 if entry[7].get() != '' and entry[8].get() != '' and entry[9].get() != '':
                     f.write(f'{entry[7].get()},{entry[8].get()},{entry[9].get()},{entry[10].get()},{entry[11].get()}')

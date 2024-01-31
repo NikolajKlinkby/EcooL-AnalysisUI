@@ -38,6 +38,20 @@ class NumpyEncoder(json.JSONEncoder):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
 
+def os_format_string(string):
+    _string = string.split('/')
+    if platform.system() == 'Windows':
+        string = ''
+        for s in _string:
+            string = os.path.join(string, s)
+        if string[1] == ':':
+            string = string[:2] + os.path.sep + string[2:]
+    else:
+        string = '/'
+        for s in _string:
+            string = os.path.join(string, s)
+    return string
+
 # Plotting preample
 major = 6
 minor = 3
@@ -134,7 +148,7 @@ class ControlWindow(tk.Tk):
 
         # Settings
         if os.path.exists(os.getcwd()+'/settings_files/settings.txt'):
-            f = open(os.getcwd()+'/settings_files/settings.txt', 'r')
+            f = open(os_format_string(os.getcwd()+'/settings_files/settings.txt'), 'r')
             self.settings = json.loads(f.read())
             f.close()
         else:
@@ -143,7 +157,7 @@ class ControlWindow(tk.Tk):
             self.settings['depletion_high'] = ['100', '10000']
             self.settings['max_TDC_chanels'] = '3125000'
             
-            f = open(os.getcwd()+'/settings_files/settings.txt', 'w')
+            f = open(os_format_string(os.getcwd()+'/settings_files/settings.txt'), 'w')
             f.write(json.dumps(self.settings, cls=NumpyEncoder))
             f.close()
 

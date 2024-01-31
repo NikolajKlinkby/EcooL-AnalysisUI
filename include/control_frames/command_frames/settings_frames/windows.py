@@ -13,6 +13,7 @@ import traceback
 from inspect import signature
 from inspect import getfullargspec
 from include.FittingRoutine import FittingRoutine
+import platform
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import (
@@ -25,6 +26,20 @@ class NumpyEncoder(json.JSONEncoder):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
+
+def os_format_string(string):
+    _string = string.split('/')
+    if platform.system() == 'Windows':
+        string = ''
+        for s in _string:
+            string = os.path.join(string, s)
+        if string[1] == ':':
+            string = string[:2] + os.path.sep + string[2:]
+    else:
+        string = '/'
+        for s in _string:
+            string = os.path.join(string, s)
+    return string
 
 def isfloat(num):
     try:
@@ -417,7 +432,7 @@ class windows(tk.LabelFrame):
             self.root.windows[entry[0].get()] = [entry[5].get(), entry[2].get(), entry[3].get()]
 
         # Write
-        f = open(selection_to_save, 'w')
+        f = open(os_format_string(selection_to_save), 'w')
         f.write(json.dumps(self.root.windows, cls=NumpyEncoder))
         f.close()
 
@@ -432,7 +447,7 @@ class windows(tk.LabelFrame):
         selection_to_load = self.root.folder_path+'/'+self.root.run_choosen+'/PythonAnalysis/windows.txt'
 
         if not self.frozen and os.path.exists(selection_to_load):
-            f = open(selection_to_load, 'r')
+            f = open(os_format_string(selection_to_load), 'r')
             self.root.windows = json.loads(f.read())
             f.close()
 

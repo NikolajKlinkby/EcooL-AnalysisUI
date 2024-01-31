@@ -2,6 +2,7 @@ import numpy as np
 import json
 import os, sys
 import time
+import platform
 
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -18,6 +19,20 @@ def flatten_list(listr):
         return np.array([item for sublist in listr for item in sublist])
     except:
         return np.array([item for item in listr])
+
+def os_format_string(string):
+    _string = string.split('/')
+    if platform.system() == 'Windows':
+        string = ''
+        for s in _string:
+            string = os.path.join(string, s)
+        if string[1] == ':':
+            string = string[:2] + os.path.sep + string[2:]
+    else:
+        string = '/'
+        for s in _string:
+            string = os.path.join(string, s)
+    return string
 
 ''' 
 function: load_data(run_folder)
@@ -79,7 +94,7 @@ def load_data(run_folder, keys=[None], silent=False, overwrite=False, memory_lim
                 if run_folder[-7:] == filename[:7] and filename[-4:] == '.dat':
                     files_to_load.append(int(filename.split('-')[-1][:-4]))
             
-            f = open(run_folder+'/PythonAnalysis/params.txt', 'r')
+            f = open(os_format_string(run_folder+'/PythonAnalysis/params.txt'), 'r')
             files = json.loads(f.read())
             if 'File' in files.keys():
                 files = files['File']
@@ -134,7 +149,7 @@ def load_data(run_folder, keys=[None], silent=False, overwrite=False, memory_lim
                 if os.path.isfile(file):
 
                     # Read file line by line
-                    with open(file) as file:
+                    with open(os_format_string(file)) as file:
                         for line in file:
 
                             # Reading header if it doesn't exist
@@ -303,11 +318,13 @@ def load_data(run_folder, keys=[None], silent=False, overwrite=False, memory_lim
                     data['TCP_type'] = 'Delay (fs)_ctr'
                 elif 'Requested Transmission_ctr' in data.keys() and 'Requested Transmission_mon' in data.keys():
                     data['TCP_type'] = 'Requested Transmission_ctr'
-                else:
+                elif 'TCP_scan_step' in data.keys():
                     data['TCP_type'] = 'TCP_scan_step'
+                else:
+                    data['TCP_type'] = 'Event'
                 
                 # Write to file
-                f = open(write_folder+f'-dat-{dat_file:03}.txt', 'w')
+                f = open(os_format_string(write_folder+f'-dat-{dat_file:03}.txt'), 'w')
                 f.write(json.dumps(data, cls=NumpyEncoder))
                 f.close()
                 
@@ -344,11 +361,13 @@ def load_data(run_folder, keys=[None], silent=False, overwrite=False, memory_lim
             data['TCP_type'] = 'Delay (fs)_ctr'
         elif 'Requested Transmission_ctr' in data.keys() and 'Requested Transmission_mon' in data.keys():
             data['TCP_type'] = 'Requested Transmission_ctr'
-        else:
+        elif 'TCP_scan_step' in data.keys():
             data['TCP_type'] = 'TCP_scan_step'
+        else:
+            data['TCP_type'] = 'Event'
         
         # Write to file
-        f = open(write_folder+f'-dat-{dat_file:03}.txt', 'w')
+        f = open(os_format_string(write_folder+f'-dat-{dat_file:03}.txt'), 'w')
         f.write(json.dumps(data, cls=NumpyEncoder))
         f.close()
 
@@ -364,7 +383,7 @@ def load_dat_file(filename, do_return=True, keys=[None], silent=False, overwrite
     # Check if load already exists
     if os.path.exists(filename) and not overwrite:
         # Read
-        f = open(filename, 'r')
+        f = open(os_format_string(filename), 'r')
         data = json.loads(f.read())
         f.close()
         
@@ -380,7 +399,7 @@ def load_dat_file(filename, do_return=True, keys=[None], silent=False, overwrite
         load_data(run_folder=run_folder, keys=keys, silent=silent, overwrite=overwrite)
         print(time.strftime('%H:%M:%S', time.gmtime())+' Load Run '+filename[-12:-4])
         # Read
-        f = open(filename, 'r')
+        f = open(os_format_string(filename), 'r')
         data = json.loads(f.read())
         f.close()
         
@@ -444,7 +463,7 @@ def update_dat_file(run_folder, files_to_load, silent = False, memory_limit=0.75
                 if os.path.isfile(file):
 
                     # Read file line by line
-                    with open(file) as file:
+                    with open(os_format_string(file)) as file:
                         for line in file:
 
                             # Reading header if it doesn't exist
@@ -640,11 +659,13 @@ def update_dat_file(run_folder, files_to_load, silent = False, memory_limit=0.75
                         data['TCP_type'] = 'Delay (fs)_ctr'
                     elif 'Requested Transmission_ctr' in data.keys() and 'Requested Transmission_mon' in data.keys():
                         data['TCP_type'] = 'Requested Transmission_ctr'
-                    else:
+                    elif 'TCP_scan_step' in data.keys():
                         data['TCP_type'] = 'TCP_scan_step'
+                    else:
+                        data['TCP_type'] = 'Event'
                     
                     # Write to file
-                    f = open(write_folder+'/'+run_folder[-7:]+f'-dat-{dat_file:03}.txt', 'w')
+                    f = open(os_format_string(write_folder+'/'+run_folder[-7:]+f'-dat-{dat_file:03}.txt'), 'w')
                     f.write(json.dumps(data, cls=NumpyEncoder))
                     f.close()
                     dat_files.append(write_folder+'/'+run_folder[-7:]+f'-dat-{dat_file:03}.txt')
@@ -709,11 +730,13 @@ def update_dat_file(run_folder, files_to_load, silent = False, memory_limit=0.75
                 data['TCP_type'] = 'Delay (fs)_ctr'
             elif 'Requested Transmission_ctr' in data.keys() and 'Requested Transmission_mon' in data.keys():
                 data['TCP_type'] = 'Requested Transmission_ctr'
-            else:
+            elif 'TCP_scan_step' in data.keys():
                 data['TCP_type'] = 'TCP_scan_step'
+            else:
+                data['TCP_type'] = 'Event'
             
             # Write to file
-            f = open(write_folder+'/'+run_folder[-7:]+f'-dat-{dat_file:03}.txt', 'w')
+            f = open(os_format_string(write_folder+'/'+run_folder[-7:]+f'-dat-{dat_file:03}.txt'), 'w')
             f.write(json.dumps(data, cls=NumpyEncoder))
             f.close()
             dat_files.append(write_folder+'/'+run_folder[-7:]+f'-dat-{dat_file:03}.txt')
@@ -740,7 +763,7 @@ def old_load_histogram(runs, nr_bins=1000, write=None, overwrite=False, silent =
         try:    
             if os.path.exists(write) and not overwrite:
                 # Load Histogram
-                f = open(write, 'r')
+                f = open(os_format_string(write), 'r')
                 hist_struct = json.loads(f.read())
                 f.close()
                 loaded_hist_struct = True
@@ -1022,7 +1045,7 @@ def old_load_histogram(runs, nr_bins=1000, write=None, overwrite=False, silent =
                 os.makedirs(write[:write.rfind('/')])
             
             # Write to file
-            f = open(write, 'w')
+            f = open(os_format_string(write), 'w')
             f.write(json.dumps(hist_struct, cls=NumpyEncoder))
             f.close()
 
@@ -1049,7 +1072,7 @@ def load_histogram(runs, nr_bins=1000, write=None, overwrite=False, silent = Fal
         try:    
             if os.path.exists(write) and not overwrite:
                 # Load Histogram
-                f = open(write, 'r')
+                f = open(os_format_string(write), 'r')
                 hist_struct = json.loads(f.read())
                 f.close()
                 loaded_hist_struct = True
@@ -1285,7 +1308,7 @@ def load_histogram(runs, nr_bins=1000, write=None, overwrite=False, silent = Fal
                 os.makedirs(write[:write.rfind('/')])
             
             # Write to file
-            f = open(write, 'w')
+            f = open(os_format_string(write), 'w')
             f.write(json.dumps(hist_struct, cls=NumpyEncoder))
             f.close()
 
@@ -1303,7 +1326,7 @@ def update_histogram(dat_files, files_to_load, write, nr_bins = 1000, silent = F
 
     if os.path.exists(write):
         # Load Histogram
-        f = open(write, 'r')
+        f = open(os_format_string(write), 'r')
         hist_struct = json.loads(f.read())
         f.close()
         loaded_hist_struct = True
@@ -1507,7 +1530,7 @@ def update_histogram(dat_files, files_to_load, write, nr_bins = 1000, silent = F
         hist_struct['edges'] = hist_struct['edges'] * TDC_res
 
         # Write to file
-        f = open(write, 'w')
+        f = open(os_format_string(write), 'w')
         f.write(json.dumps(hist_struct, cls=NumpyEncoder))
         f.close()
 
@@ -1532,7 +1555,7 @@ def load_parameters(runs, write=None, overwrite=False, silent = False, threshold
         try:    
             if os.path.exists(write) and not overwrite:
                 # Load Parameters
-                f = open(write, 'r')
+                f = open(os_format_string(write), 'r')
                 param_struct = json.loads(f.read())
                 f.close()
                 loaded_param_struct = True
@@ -1581,11 +1604,20 @@ def load_parameters(runs, write=None, overwrite=False, silent = False, threshold
                                 param_struct['TDC.max'] = np.array([max])
                         
                         # Add key to flags (parameters in the experiment) TODO fix check (TCP flag not always written)
-                        elif (len(data[key]),len(data[key][0])) == (len(data['TCP_scan_step']),len(data['TCP_scan_step'][0])) and (isinstance(data[key][0][0],float) or isinstance(data[key][0][0],int)) and (key not in param_struct['flags']):
+                        elif 'TCP_scan_step' in data.keys():
+                            if (len(data[key]),len(data[key][0])) == (len(data['TCP_scan_step']),len(data['TCP_scan_step'][0])) and (isinstance(data[key][0][0],float) or isinstance(data[key][0][0],int)) and (key not in param_struct['flags']):
+                                param_struct['flags'].append(key)
+                                param_struct[key] = flatten_list(data[key])
+                        
+                            elif (len(data[key]),len(data[key][0])) == (len(data['TCP_scan_step']),len(data['TCP_scan_step'][0])) and (isinstance(data[key][0][0],float) or isinstance(data[key][0][0],int)):
+                                param_struct[key] = np.concatenate((param_struct[key],flatten_list(data[key])))
+                        elif (isinstance(data[key][0][0],float) or isinstance(data[key][0][0],int)) and (key not in param_struct['flags']):
+                            print(key)
                             param_struct['flags'].append(key)
                             param_struct[key] = flatten_list(data[key])
-                    
-                        elif (len(data[key]),len(data[key][0])) == (len(data['TCP_scan_step']),len(data['TCP_scan_step'][0])) and (isinstance(data[key][0][0],float) or isinstance(data[key][0][0],int)):
+                        
+                        elif (isinstance(data[key][0][0],float) or isinstance(data[key][0][0],int)):
+                            print(key)
                             param_struct[key] = np.concatenate((param_struct[key],flatten_list(data[key])))
                     except:
                         if key == 'Event' and (key not in param_struct['flags']):
@@ -1631,7 +1663,7 @@ def load_parameters(runs, write=None, overwrite=False, silent = False, threshold
                 os.makedirs(write[:write.rfind('/')])
             
             # Write to file
-            f = open(write, 'w')
+            f = open(os_format_string(write), 'w')
             f.write(json.dumps(param_struct, cls=NumpyEncoder))
             f.close()
 

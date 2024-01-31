@@ -1,6 +1,7 @@
 import numpy as np
 import json
 import os, sys
+import platform
 
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -11,7 +12,19 @@ class NumpyEncoder(json.JSONEncoder):
 def flatten_list(listr):
     return np.array([item for sublist in listr for item in sublist])
 
-
+def os_format_string(string):
+    _string = string.split('/')
+    if platform.system() == 'Windows':
+        string = ''
+        for s in _string:
+            string = os.path.join(string, s)
+        if string[1] == ':':
+            string = string[:2] + os.path.sep + string[2:]
+    else:
+        string = '/'
+        for s in _string:
+            string = os.path.join(string, s)
+    return string
 
 # Write has structure [coinc_struct, coin_hist_struct, hist_struct]
 def create_structs(runs, keys = ['TDC1.ESP_F','TDC1.HEX_B'], hist_keys = ['TDC1.ESP_F','TDC1.HEX_B', 'TDC1.HCH_B'], nr_bins=20000, coinc_analysis=False, coinc_time_int=[None], hist_time_int=[None], write=[None,None,None], overwrite=[False,False,False], channels_total = 1500000000, diff_channels_total = 2000000, photon_diag_file_format=False, ion_flags=[]):

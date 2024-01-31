@@ -113,7 +113,6 @@ class plot_settings(tk.LabelFrame):
                 print('xmax must be greater than xmin')
             else:
                 ax.set_xlim(float(self.xmin_entry.get()), float(self.xmax_entry.get()))
-        self.container.figure.fig.axes[-1].set_xticklabels(self.container.figure.fig.axes[-1].get_xticks())
         self.container.figure.canvas.draw()
 
     def show_window(self):

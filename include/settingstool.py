@@ -13,6 +13,7 @@ import traceback
 from inspect import signature
 from inspect import getfullargspec
 from include.FittingRoutine import FittingRoutine
+import platform
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -26,7 +27,21 @@ class NumpyEncoder(json.JSONEncoder):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
-    
+
+def os_format_string(string):
+    _string = string.split('/')
+    if platform.system() == 'Windows':
+        string = ''
+        for s in _string:
+            string = os.path.join(string, s)
+        if string[1] == ':':
+            string = string[:2] + os.path.sep + string[2:]
+    else:
+        string = '/'
+        for s in _string:
+            string = os.path.join(string, s)
+    return string
+
 # Plotting preample
 major = 6
 minor = 3
@@ -195,7 +210,7 @@ class settingstool(tk.Toplevel):
             else:
                 self.root.settings[key] = set
 
-        f = open(os.getcwd()+'/settings_files/settings.txt', 'w')
+        f = open(os_format_string(os.getcwd()+'/settings_files/settings.txt'), 'w')
         f.write(json.dumps(self.root.settings, cls=NumpyEncoder))
         f.close()
         

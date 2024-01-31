@@ -13,6 +13,7 @@ import traceback
 from inspect import signature
 from inspect import getfullargspec
 from include.FittingRoutine import FittingRoutine
+import platform
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import (
@@ -25,6 +26,20 @@ class NumpyEncoder(json.JSONEncoder):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
+
+def os_format_string(string):
+    _string = string.split('/')
+    if platform.system() == 'Windows':
+        string = ''
+        for s in _string:
+            string = os.path.join(string, s)
+        if string[1] == ':':
+            string = string[:2] + os.path.sep + string[2:]
+    else:
+        string = '/'
+        for s in _string:
+            string = os.path.join(string, s)
+    return string
 
 class calculations(tk.LabelFrame):
     def __init__(self, container, root, *args, **kwargs):
@@ -209,7 +224,7 @@ class calculations(tk.LabelFrame):
                     file = dir+'/'+f
                
         # Read
-        with open(file, 'r') as f:
+        with open(os_format_string(file), 'r') as f:
             self.file_entry.insert('end',f.read())
             
         self.file_entry.configure(state=state)
@@ -238,7 +253,7 @@ class calculations(tk.LabelFrame):
         # Calculate 
         selection_to_load = self.root.folder_path+'/'+self.root.run_choosen+'/PythonAnalysis/calculations.txt'
         if os.path.exists(selection_to_load):
-            f = open(selection_to_load, 'r')
+            f = open(os_format_string(selection_to_load), 'r')
             self.root.calculations = json.loads(f.read())
             f.close()
             self.container.datapathsettings.calclabel.config(text = 'Calc: V')
@@ -261,7 +276,7 @@ class calculations(tk.LabelFrame):
             print(time.strftime('%H:%M:%S', time.gmtime())+' Calculations done')
             
             # Write to file
-            f = open(selection_to_load, 'w')
+            f = open(os_format_string(selection_to_load), 'w')
             f.write(json.dumps(self.root.calculations, cls=NumpyEncoder))
             f.close()
 

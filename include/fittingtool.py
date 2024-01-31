@@ -13,6 +13,7 @@ import traceback
 from inspect import signature
 from inspect import getfullargspec
 from include.FittingRoutine import FittingRoutine
+import platform
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -26,6 +27,20 @@ class NumpyEncoder(json.JSONEncoder):
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
+    
+def os_format_string(string):
+    _string = string.split('/')
+    if platform.system() == 'Windows':
+        string = ''
+        for s in _string:
+            string = os.path.join(string, s)
+        if string[1] == ':':
+            string = string[:2] + os.path.sep + string[2:]
+    else:
+        string = '/'
+        for s in _string:
+            string = os.path.join(string, s)
+    return string
     
 # Plotting preample
 major = 6
@@ -474,7 +489,6 @@ class fittingtool(tk.Toplevel):
             ax1.legend(handles=handles,loc = 1)
 
         ax1.sharex(ax2)
-        ax1.set_xticklabels([])
         ax1.minorticks_on()
         ax1.grid(visible=True, which='major', axis='both', color='gray', alpha=0.5, linestyle='-')
         ax1.grid(visible=True, which='minor', axis='both', color='gray', alpha=0.3, linestyle='--')
@@ -511,7 +525,7 @@ class fittingtool(tk.Toplevel):
         self.filepath = tk.filedialog.askdirectory(initialdir = self.root.folder_path)
         if 'Run-' in self.filepath.split('/')[-1]:
             if os.path.exists(self.filepath+'/PythonAnalysis/plotdict.txt'):
-                f = open(self.filepath+'/PythonAnalysis/plotdict.txt', 'r')
+                f = open(os_format_string(self.filepath+'/PythonAnalysis/plotdict.txt'), 'r')
                 calculations = json.loads(f.read())
                 f.close()
 
@@ -554,7 +568,7 @@ class fittingtool(tk.Toplevel):
             if not self.cont:
                 return
             
-            f = open(os.getcwd()+'/fitting_presets/'+self.name_of_file+'.txt', "w")
+            f = open(os_format_string(os.getcwd()+'/fitting_presets/'+self.name_of_file+'.txt'), "w")
             f.write(self.fit_text.get())
             f.close()
 
@@ -608,7 +622,7 @@ class fittingtool(tk.Toplevel):
     def save_fit(self):
         
         # Write txt file
-        f = open(self.filepath+'/PythonAnalysis/fit_params.txt', 'w')
+        f = open(os_format_string(self.filepath+'/PythonAnalysis/fit_params.txt'), 'w')
         
         string = ''
         for entry in self.header:
@@ -626,7 +640,7 @@ class fittingtool(tk.Toplevel):
 
         f.close()
 
-        f = open(self.filepath+'/PythonAnalysis/fit_val.txt', 'w')
+        f = open(os_format_string(self.filepath+'/PythonAnalysis/fit_val.txt'), 'w')
         
         f.write('x,y,y_var,normres')
         for i in range(len(self.fit.x)):
@@ -634,7 +648,7 @@ class fittingtool(tk.Toplevel):
 
         f.close()
 
-        f = open(self.filepath+'/PythonAnalysis/fit_info.txt', 'w')
+        f = open(os_format_string(self.filepath+'/PythonAnalysis/fit_info.txt'), 'w')
         
         f.write(f'Chi2: {self.fit.Chi2}, Pval: {self.fit.Pval}, df: {self.fit.df},\n')
         f.write(f'Function:\n')
@@ -647,7 +661,7 @@ class fittingtool(tk.Toplevel):
         self.fit = {}
 
         if os.path.exists(os.getcwd()+'/fitting_presets/'+self.preset_var.get()):
-            f = open(os.getcwd()+'/fitting_presets/'+self.preset_var.get(), 'r')
+            f = open(os_format_string(os.getcwd()+'/fitting_presets/'+self.preset_var.get()), 'r')
             self.fit_text.insert('end', f'{f.read()}')
             f.close()
 
