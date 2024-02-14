@@ -445,6 +445,8 @@ class fittingtool(tk.Toplevel):
 
         self.fit = {}
         self.y, self.y_err = self.memory[var.get()]
+        self.y_err = np.array(self.y_err) / max(self.y)**2
+        self.y = np.array(self.y) / max(self.y)
 
         self.update_plot()
 
@@ -522,7 +524,8 @@ class fittingtool(tk.Toplevel):
         # Reset
         self.memory = dict()
         
-        self.filepath = tk.filedialog.askdirectory(initialdir = self.root.folder_path)
+        file_path = tk.filedialog.askdirectory(initialdir = self.root.folder_path)
+        self.filepath = file_path
         if 'Run-' in self.filepath.split('/')[-1]:
             if os.path.exists(self.filepath+'/PythonAnalysis/plotdict.txt'):
                 f = open(os_format_string(self.filepath+'/PythonAnalysis/plotdict.txt'), 'r')
@@ -551,6 +554,8 @@ class fittingtool(tk.Toplevel):
             self.memory = self.root.plotdict
 
             self.x = self.memory.pop('x')
+
+        self.filepath=self.root.folder_path + '/'+self.root.run_choosen
 
         # Update dropdown
         self.update_dropdown()

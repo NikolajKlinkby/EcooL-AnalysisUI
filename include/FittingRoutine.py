@@ -279,6 +279,70 @@ def two_exp_gauss_dist_hess(x, a1, a2, mu, sigma, lamb1, lamb2, b):
     else:
         return np.nan_to_num(two_exp_gauss_dist_hess_matrix(x, a1, a2, mu, sigma, lamb1, lamb2, b), posinf=0, neginf=0)
 
+# Three Exponentially modified Gaussian distribution
+
+def three_exp_gauss_dist(x, a1, a2, a3, mu, sigma, lamb1, lamb2, lamb3, b):
+    if lamb1 * sigma <= 0 or lamb2 * sigma <= 0 or lamb3 * sigma <= 0 or lamb1 >= lamb2:
+        return x*0
+    else:
+        return exp_gauss_dist(x,a1,mu,sigma,lamb1,0) + exp_gauss_dist(x,a2,mu,sigma,lamb2,0) + exp_gauss_dist(x,a3,mu,sigma,lamb3,0) + b
+
+# parameter gradient
+def three_exp_gauss_dist_jac(x, a1, a2, a3, mu, sigma, lamb1, lamb2, lamb3, b):
+    jacob1 = exp_gauss_dist_jac(x,a1,mu,sigma,lamb1,b)
+    jacob2 = exp_gauss_dist_jac(x,a2,mu,sigma,lamb2,b)
+    jacob3 = exp_gauss_dist_jac(x,a3,mu,sigma,lamb3,b)
+    
+    a1_deriv = jacob1[0]
+    a2_deriv = jacob2[0]
+    a3_deriv = jacob3[0]
+    mu_deriv = jacob1[1] + jacob2[1] + jacob3[1]
+    sigma_deriv = jacob1[2] + jacob2[2] + jacob3[2]
+    lamb1_deriv = jacob1[3]
+    lamb2_deriv = jacob2[3]
+    lamb3_deriv = jacob3[3]
+
+    if isinstance(x, np.ndarray) != 1:
+        b_deriv = 1
+    else:
+        b_deriv = np.ones(len(x))
+    return np.nan_to_num(np.array([a1_deriv,a2_deriv,a3_deriv, mu_deriv, sigma_deriv, lamb1_deriv, lamb2_deriv,lamb3_deriv, b_deriv]), posinf=0, neginf=0)
+
+# Hessian
+def three_exp_gauss_dist_hess_matrix(x, a1, a2, a3, mu, sigma, lamb1, lamb2, lamb3, b):
+    hess1 = exp_gauss_dist_hess_matrix(x, a1, mu, sigma, lamb1, b)
+    hess2 = exp_gauss_dist_hess_matrix(x, a2, mu, sigma, lamb2, b)
+    hess3 = exp_gauss_dist_hess_matrix(x, a3, mu, sigma, lamb3, b)
+
+    grad_deriv_a1 = np.insert(np.insert(hess1[0], 1, [0,0]), 6, [0,0])
+
+    grad_deriv_a2 = np.insert(np.insert(np.insert(np.insert(hess2[0], 0, 0), 2, 0), 5, 0), 7, 0)
+
+    grad_deriv_a3 = np.insert(np.insert(hess3[0], 0, [0,0]), 5, [0,0])
+
+    grad_deriv_mu = np.insert(np.insert(hess1[1], 1, [0,0]), 6, [0,0]) + np.insert(np.insert(np.insert(np.insert(hess2[1], 0, 0), 2, 0), 5, 0), 7, 0) + np.insert(np.insert(hess3[1], 0, [0,0]), 5, [0,0])
+
+    grad_deriv_sig = np.insert(np.insert(hess1[2], 1, [0,0]), 6, [0,0]) + np.insert(np.insert(np.insert(np.insert(hess2[2], 0, 0), 2, 0), 5, 0), 7, 0) + np.insert(np.insert(hess3[2], 0, [0,0]), 5, [0,0])
+
+    grad_deriv_lamb1 = np.insert(np.insert(hess1[3], 1, [0,0]), 6, [0,0])
+    
+    grad_deriv_lamb2 = np.insert(np.insert(np.insert(np.insert(hess2[3], 0, 0), 2, 0), 5, 0), 7, 0)
+
+    grad_deriv_lamb3 = np.insert(np.insert(hess3[3], 0, [0,0]), 5, [0,0])
+
+    grad_deriv_b = np.array([0, 0, 0, 0, 0, 0, 0, 0, 1])
+
+    return np.array([grad_deriv_a1, grad_deriv_a2, grad_deriv_a3, grad_deriv_mu,
+                     grad_deriv_sig, grad_deriv_lamb1, grad_deriv_lamb2, grad_deriv_lamb3, grad_deriv_b])
+
+def three_exp_gauss_dist_hess(x, a1, a2, a3, mu, sigma, lamb1, lamb2, lamb3, b):
+    if isinstance(x, np.ndarray):
+        ret = three_exp_gauss_dist_hess_matrix(x[0], a1, a2, a3, mu, sigma, lamb1, lamb2, lamb3, b)
+        for i in range(1, len(x)):
+            ret = stack(ret, three_exp_gauss_dist_hess_matrix(x[i], a1, a2, a3, mu, sigma, lamb1, lamb2, lamb3, b))
+        return np.array(ret)
+    else:
+        return np.nan_to_num(three_exp_gauss_dist_hess_matrix(x, a1, a2, a3, mu, sigma, lamb1, lamb2, lamb3, b), posinf=0, neginf=0)
 
 #%%
 

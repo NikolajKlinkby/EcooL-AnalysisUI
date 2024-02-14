@@ -1,0 +1,13 @@
+from include.FittingRoutine import three_exp_gauss_dist, three_exp_gauss_dist_jac, three_exp_gauss_dist_hess
+
+# Two-Exponential convolution with a Gaussian
+# Not defined for sigma / tau <= 0
+
+def f(x,a1,a2,a3,mu,sigma,tau1,tau2,tau3,b):
+	return three_exp_gauss_dist(x,a1,a2,a3,mu,sigma,1/tau1,1/tau2,1/tau3,b)
+	
+def jac(x,a1,a2,a3,mu,sigma,tau1,tau2,tau3,b):
+	return three_exp_gauss_dist_jac(x,a1,a2,a3,mu,sigma,1/tau1,1/tau2,1/tau3,b)
+	
+def hess(x,a1,a2,a3,mu,sigma,tau1,tau2,tau3,b):
+	return three_exp_gauss_dist_hess(x,a1,a2,a3,mu,sigma,1/tau1,1/tau2,1/tau3,b)

@@ -44,8 +44,8 @@ for win in self.container.windows.entries:
 			sig = S1 + (S4 - S3 - S2)
 			variance = S1 + S2 + S3 + S4
 		else:
-			sig = S1 + (S4*B4 - S3*B3 - S2*B2) / B1
-			variance = S1 + (S4*B4 - S3*B3 - S2*B2)**2 / B1**3 + (S4**2*B4 + S4*B4**2 + S3**2*B3 + S3*B3**2 + S2**2*B2 + S2*B2**2) / B1**2
+			sig = S1 / B1 + (S4*B4 - S3*B3 - S2*B2) / B1**2
+			variance = S1 / B1**2 + 2*(S4*B4 - S3*B3 - S2*B2)**2 / B1**5 + (S4**2*B4 + S4*B4**2 + S3**2*B3 + S3*B3**2 + S2**2*B2 + S2*B2**2) / B1**4
 		
 		signal.append(sig)
 		signal_err.append(variance)
