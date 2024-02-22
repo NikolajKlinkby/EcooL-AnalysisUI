@@ -278,7 +278,7 @@ class histogram(tk.LabelFrame):
         for key in self.root.histogram['time_keys']:
             self.detector_list.insert(tk.END, key)
         
-        scan_list = np.unique(self.root.parameters[self.root.histogram['scan_key']])
+        scan_list = np.unique(self.root.parameters[self.root.parameters['scan_key']])
         
         if len(scan_list) > 200:
             for key in scan_list[::int(len(scan_list)/100)]:

@@ -513,12 +513,13 @@ class windows(tk.LabelFrame):
                 self.restorebut['state'] = 'normal'
             # Create
             else:
-                for key in self.root.histogram['time_keys']:
-                    # Add to background
-                    self.add_back_row(key)
+                if 'time_keys' in self.root.histogram.keys():
+                    for key in self.root.histogram['time_keys']:
+                        # Add to background
+                        self.add_back_row(key)
 
-                    # Add to window
-                    self.add_row(key, self.root.histogram['time_keys'])
+                        # Add to window
+                        self.add_row(key, self.root.histogram['time_keys'])
 
         # Enable buttons
         self.savebut['state'] = 'normal'

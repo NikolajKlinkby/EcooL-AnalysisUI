@@ -1611,13 +1611,12 @@ def load_parameters(runs, write=None, overwrite=False, silent = False, threshold
                         
                             elif (len(data[key]),len(data[key][0])) == (len(data['TCP_scan_step']),len(data['TCP_scan_step'][0])) and (isinstance(data[key][0][0],float) or isinstance(data[key][0][0],int)):
                                 param_struct[key] = np.concatenate((param_struct[key],flatten_list(data[key])))
+                        
                         elif (isinstance(data[key][0][0],float) or isinstance(data[key][0][0],int)) and (key not in param_struct['flags']):
-                            print(key)
                             param_struct['flags'].append(key)
                             param_struct[key] = flatten_list(data[key])
-                        
+                            
                         elif (isinstance(data[key][0][0],float) or isinstance(data[key][0][0],int)):
-                            print(key)
                             param_struct[key] = np.concatenate((param_struct[key],flatten_list(data[key])))
                     except:
                         if key == 'Event' and (key not in param_struct['flags']):

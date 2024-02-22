@@ -206,40 +206,42 @@ class data_path_settings(tk.LabelFrame):
                     self.root.parameters = load_parameters([selection_to_load+'/JSON/'+self.run_selected], write=selection_to_load+'/PythonAnalysis/params.txt', 
                                                         overwrite=overwrite, threshold=1000)
                     
-                    # Hist limits
-                    hist_limits = [self.root.parameters['TDC.min'][0],self.root.parameters['TDC.max'][0]]
-                    if self.root.parameters['TDC.max'][0] - self.root.parameters['TDC.min'][0] > 3125000:
-                        hist_limits[0] = self.root.parameters['TDC.max'][0] - 3125000
+                    if 'TCP_scan_step' in self.root.parameters.keys():
+                        # Hist limits
+                        hist_limits = [self.root.parameters['TDC.min'][0],self.root.parameters['TDC.max'][0]]
+                        if self.root.parameters['TDC.max'][0] - self.root.parameters['TDC.min'][0] > 3125000:
+                            hist_limits[0] = self.root.parameters['TDC.max'][0] - 3125000
 
-                    # Load Histogram
-                    self.root.histogram = load_histogram([selection_to_load+'/JSON/'+self.run_selected],write=selection_to_load+'/PythonAnalysis/hist.txt', 
-                                                        nr_bins=self.root.bin_size, overwrite=overwrite, 
-                                                        hist_limits=hist_limits)
-                    
-                    if os.path.exists(selection_to_load+'/PythonAnalysis/hist_deplete.txt'):
-                        # Load Depletion Histogram
-                        self.root.histogram_deplete = load_histogram([selection_to_load+'/JSON/'+self.run_selected],write=selection_to_load+'/PythonAnalysis/hist_deplete.txt', 
-                                                        nr_bins=self.root.bin_size, overwrite=overwrite, 
-                                                        hist_limits=hist_limits)
+                        # Load Histogram
+                        self.root.histogram = load_histogram([selection_to_load+'/JSON/'+self.run_selected],write=selection_to_load+'/PythonAnalysis/hist.txt', 
+                                                            nr_bins=self.root.bin_size, overwrite=overwrite, 
+                                                            hist_limits=hist_limits)
+                        
+                        if os.path.exists(selection_to_load+'/PythonAnalysis/hist_deplete.txt'):
+                            # Load Depletion Histogram
+                            self.root.histogram_deplete = load_histogram([selection_to_load+'/JSON/'+self.run_selected],write=selection_to_load+'/PythonAnalysis/hist_deplete.txt', 
+                                                            nr_bins=self.root.bin_size, overwrite=overwrite, 
+                                                            hist_limits=hist_limits)
 
                 else:
                     # Load Parameters
                     self.root.parameters = load_parameters([selection_to_load+'/JSON/'+self.run_selected], write=selection_to_load+'/PythonAnalysis/params.txt', 
                                                         overwrite=updated, threshold=1000)
                     
-                    # Hist limits
-                    hist_limits = [self.root.parameters['TDC.min'][0],self.root.parameters['TDC.max'][0]]
-                    if self.root.parameters['TDC.max'][0] - self.root.parameters['TDC.min'][0] > 3125000:
-                        hist_limits[0] = self.root.parameters['TDC.max'][0] - 3125000
-                    
-                    # Load Histogram
-                    self.root.histogram = update_histogram(dat_files, files_to_load, write=selection_to_load+'/PythonAnalysis/hist.txt', 
-                                                        hist_limits=hist_limits)
-                    
-                    if os.path.exists(selection_to_load+'/PythonAnalysis/hist_deplete.txt'):
-                        # Load Depletion Histogram
-                        self.root.histogram_deplete = update_histogram(dat_files, files_to_load, write=selection_to_load+'/PythonAnalysis/hist_deplete.txt', 
+                    if 'TCP_scan_step' in self.root.parameters.keys():
+                        # Hist limits
+                        hist_limits = [self.root.parameters['TDC.min'][0],self.root.parameters['TDC.max'][0]]
+                        if self.root.parameters['TDC.max'][0] - self.root.parameters['TDC.min'][0] > 3125000:
+                            hist_limits[0] = self.root.parameters['TDC.max'][0] - 3125000
+                        
+                        # Load Histogram
+                        self.root.histogram = update_histogram(dat_files, files_to_load, write=selection_to_load+'/PythonAnalysis/hist.txt', 
                                                             hist_limits=hist_limits)
+                        
+                        if os.path.exists(selection_to_load+'/PythonAnalysis/hist_deplete.txt'):
+                            # Load Depletion Histogram
+                            self.root.histogram_deplete = update_histogram(dat_files, files_to_load, write=selection_to_load+'/PythonAnalysis/hist_deplete.txt', 
+                                                                hist_limits=hist_limits)
             
             # Otherwise just load the histogram
             else:
@@ -247,21 +249,22 @@ class data_path_settings(tk.LabelFrame):
                 self.root.parameters = load_parameters([selection_to_load+'/JSON/'+self.run_selected], write=selection_to_load+'/PythonAnalysis/params.txt', 
                                                        overwrite=overwrite, threshold=1000)
                 
-                # Hist limits
-                hist_limits = [self.root.parameters['TDC.min'][0],self.root.parameters['TDC.max'][0]]
-                if self.root.parameters['TDC.max'][0] - self.root.parameters['TDC.min'][0] > 3125000:
-                    hist_limits[0] = self.root.parameters['TDC.max'][0] - 3125000
-                
-                # Load Histogram
-                self.root.histogram = load_histogram([selection_to_load+'/JSON/'+self.run_selected],write=selection_to_load+'/PythonAnalysis/hist.txt', 
-                                                    nr_bins=self.root.bin_size, overwrite=overwrite, 
+                if 'TCP_scan_step' in self.root.parameters.keys():
+                    # Hist limits
+                    hist_limits = [self.root.parameters['TDC.min'][0],self.root.parameters['TDC.max'][0]]
+                    if self.root.parameters['TDC.max'][0] - self.root.parameters['TDC.min'][0] > 3125000:
+                        hist_limits[0] = self.root.parameters['TDC.max'][0] - 3125000
+                    
+                    # Load Histogram
+                    self.root.histogram = load_histogram([selection_to_load+'/JSON/'+self.run_selected],write=selection_to_load+'/PythonAnalysis/hist.txt', 
+                                                        nr_bins=self.root.bin_size, overwrite=overwrite, 
+                                                            hist_limits=hist_limits)
+                    
+                    if os.path.exists(selection_to_load+'/PythonAnalysis/hist_deplete.txt'):
+                        # Load Depletion Histogram
+                        self.root.histogram_deplete = load_histogram([selection_to_load+'/JSON/'+self.run_selected],write=selection_to_load+'/PythonAnalysis/hist_deplete.txt', 
+                                                        nr_bins=self.root.bin_size, overwrite=overwrite, 
                                                         hist_limits=hist_limits)
-                
-                if os.path.exists(selection_to_load+'/PythonAnalysis/hist_deplete.txt'):
-                    # Load Depletion Histogram
-                    self.root.histogram_deplete = load_histogram([selection_to_load+'/JSON/'+self.run_selected],write=selection_to_load+'/PythonAnalysis/hist_deplete.txt', 
-                                                    nr_bins=self.root.bin_size, overwrite=overwrite, 
-                                                    hist_limits=hist_limits)
                 
             self.root.run_choosen = self.run_selected
 
@@ -276,8 +279,10 @@ class data_path_settings(tk.LabelFrame):
             self.root.Command.results.update_lists_in_row()
 
             self.container.container.plotoptframe.parameters.load_update()
-            self.container.container.plotoptframe.histogram.load_update()
-            self.histlabel.config(text = 'Hist: V')
+            
+            if 'TCP_scan_step' in self.root.parameters.keys():
+                self.container.container.plotoptframe.histogram.load_update()
+                self.histlabel.config(text = 'Hist: V')
 
             
 

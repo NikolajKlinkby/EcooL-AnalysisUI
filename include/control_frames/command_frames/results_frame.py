@@ -337,11 +337,11 @@ class results_frame(tk.LabelFrame):
         for win in self.root.Command.settingsframe.windows.entries_back:
             self.detector_options.append(win[0]['text'] + ':' + 'background')
 
-        if self.root.histogram['scan_key'] == 'Wavelength_ctr' or self.root.histogram['scan_key'] == 'Requested Transmission_ctr':
+        if self.root.parameters['scan_key'] == 'Wavelength_ctr' or self.root.parameters['scan_key'] == 'Requested Transmission_ctr':
             self.index_options.append('All')
             self.index_options.append('Laser')
             self.index_options.append('No laser')  
-        elif self.root.histogram['scan_key'] == 'Delay (fs)_ctr':
+        elif self.root.parameters['scan_key'] == 'Delay (fs)_ctr':
             self.index_options.append('All')
             self.index_options.append('PumpProbe')
             self.index_options.append('Probe')

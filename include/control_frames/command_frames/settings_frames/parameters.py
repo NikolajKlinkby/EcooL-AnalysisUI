@@ -166,7 +166,7 @@ class parameters(tk.LabelFrame):
 
         width = self.canvas.winfo_reqwidth()
         
-        if self.root.histogram['scan_key'] == 'Wavelength_ctr' or self.root.histogram['scan_key'] == 'Requested Transmission_ctr':
+        if self.root.parameters['scan_key'] == 'Wavelength_ctr' or self.root.parameters['scan_key'] == 'Requested Transmission_ctr':
             
             parameter_label = ttk.Label(self.inner_frame, text=f'Parameter', borderwidth=1, relief='solid')
             parameter_label.place(x=0, y=y, width=3/10*width, height=height)
@@ -182,7 +182,7 @@ class parameters(tk.LabelFrame):
 
             self.header = [parameter_label, laser_label, no_laser_label, enabled_label]
 
-        elif self.root.histogram['scan_key'] == 'Delay (fs)_ctr':
+        elif self.root.parameters['scan_key'] == 'Delay (fs)_ctr':
             
             parameter_label = ttk.Label(self.inner_frame, text=f'Parameter', borderwidth=1, relief='solid')
             parameter_label.place(x=0, y=y, width=3/10*width, height=height)
@@ -279,7 +279,7 @@ class parameters(tk.LabelFrame):
 
         width = self.canvas.winfo_reqwidth()
 
-        if self.root.histogram['scan_key'] == 'Wavelength_ctr' or self.root.histogram['scan_key'] == 'Requested Transmission_ctr':
+        if self.root.parameters['scan_key'] == 'Wavelength_ctr' or self.root.parameters['scan_key'] == 'Requested Transmission_ctr':
         
             label = ttk.Label(self.inner_frame, text=param, background='white', borderwidth=1, relief='solid')
             label.place(x=0, y=y, width=3/10*width, height=height)
@@ -422,17 +422,17 @@ class parameters(tk.LabelFrame):
 
     def on_scan_select(self, event):
         # Check if current variable is convertable
-        if len(np.unique(self.root.parameters[self.scanvariable.get()], return_index=True)[0]) ==  len(np.unique(self.root.parameters[self.root.histogram['scan_key']], return_index=True)[0]):
+        if len(np.unique(self.root.parameters[self.scanvariable.get()], return_index=True)[0]) ==  len(np.unique(self.root.parameters[self.root.parameters['scan_key']], return_index=True)[0]):
             
             # Make map between keys.
-            old_scan_val = np.unique(self.root.parameters[self.root.histogram['scan_key']], return_index=True)
+            old_scan_val = np.unique(self.root.parameters[self.root.parameters['scan_key']], return_index=True)
             new_scan_val = np.array(self.root.parameters[self.scanvariable.get()])[old_scan_val[1]]
 
             # Check the mapping is linear
-            if self.scan_unique_check(np.array([old_scan_val[0], new_scan_val]),np.unique([self.root.parameters[self.root.histogram['scan_key']],self.root.parameters[self.scanvariable.get()]], axis=1)):
+            if self.scan_unique_check(np.array([old_scan_val[0], new_scan_val]),np.unique([self.root.parameters[self.root.parameters['scan_key']],self.root.parameters[self.scanvariable.get()]], axis=1)):
                 # Set new scan key
 
-                if self.root.histogram['scan_key'] == 'Wavelength_ctr' or self.root.histogram['scan_key'] == 'Requested Transmission_ctr':
+                if self.root.parameters['scan_key'] == 'Wavelength_ctr' or self.root.parameters['scan_key'] == 'Requested Transmission_ctr':
                     for old_scan,new_scan in zip(old_scan_val[0], new_scan_val):
                         for key in self.root.histogram['time_keys']:
                             self.root.histogram[key + '_hist_1_'+str(new_scan)] = self.root.histogram.pop(key + '_hist_1_'+str(old_scan))
@@ -446,11 +446,18 @@ class parameters(tk.LabelFrame):
                             self.root.histogram[key + '_hist_0_1_'+str(new_scan)] = self.root.histogram.pop(key + '_hist_0_1_'+str(old_scan))
 
                 self.root.histogram['scan_key'] = self.scanvariable.get()
+                self.root.parameters['scan_key'] = self.scanvariable.get()
 
                 # Write to file
+                if self.root.Command.settingsframe.datapathsettings.histlabel['text'] == 'Hist: V':
+                    selection_to_load = self.root.folder_path+'/'+self.root.run_choosen
+                    f = open(os_format_string(selection_to_load+'/PythonAnalysis/hist.txt'), 'w')
+                    f.write(json.dumps(self.root.histogram, cls=NumpyEncoder))
+                    f.close()
+
                 selection_to_load = self.root.folder_path+'/'+self.root.run_choosen
-                f = open(os_format_string(selection_to_load+'/PythonAnalysis/hist.txt'), 'w')
-                f.write(json.dumps(self.root.histogram, cls=NumpyEncoder))
+                f = open(os_format_string(selection_to_load+'/PythonAnalysis/params.txt'), 'w')
+                f.write(json.dumps(self.root.parameters, cls=NumpyEncoder))
                 f.close()
             
                 # Update histogram scan values
@@ -594,7 +601,7 @@ class parameters(tk.LabelFrame):
     def delete_histogram_plots(self):
         for item in self.root.tab_bar.winfo_children():
             if len(self.root.tab_bar.tab(item)['text'].split(' ')) > 1:
-                if self.root.tab_bar.tab(item)['text'].split(' ')[1] in self.root.histogram['scan_key']:
+                if self.root.tab_bar.tab(item)['text'].split(' ')[1] in self.root.parameters['scan_key']:
                     if len(self.root.tab_bar.winfo_children()) > 1:
                         item.destroy()
                     else:
@@ -715,7 +722,7 @@ class parameters(tk.LabelFrame):
             self.scandropdown['menu'].add_command(label=key, command=lambda x=key: self.update_scan_dropdown(self.scanvariable, x))
             self.add_row(key)
             
-            if self.root.histogram['scan_key'] == 'Wavelength_ctr' or self.root.histogram['scan_key'] == 'Requested Transmission_ctr':
+            if self.root.parameters['scan_key'] == 'Wavelength_ctr' or self.root.parameters['scan_key'] == 'Requested Transmission_ctr':
                 self.entries[-1][1].config(validate='none')
                 self.entries[-1][1].delete(0,'end')
                 self.entries[-1][2].config(validate='none')
@@ -780,7 +787,7 @@ class parameters(tk.LabelFrame):
                             self.entries[-1][6].set(True)
                         break
                 else:
-                    if self.root.histogram['scan_key'] == 'Wavelength_ctr' or self.root.histogram['scan_key'] == 'Requested Transmission_ctr':
+                    if self.root.parameters['scan_key'] == 'Wavelength_ctr' or self.root.parameters['scan_key'] == 'Requested Transmission_ctr':
                         self.entries[-1][1].config(validate='none')
                         self.entries[-1][1].delete(0,'end')
                         self.entries[-1][2].config(validate='none')
@@ -812,7 +819,7 @@ class parameters(tk.LabelFrame):
                         self.entries[-1][4].config(validate='key')
             
         # Set scan variable
-        self.scanvariable.set(self.root.histogram['scan_key'])
+        self.scanvariable.set(self.root.parameters['scan_key'])
 
     class ThreadClient(Thread):
         def __init__(self, queue, fcn):

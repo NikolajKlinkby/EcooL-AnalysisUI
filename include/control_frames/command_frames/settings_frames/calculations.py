@@ -239,11 +239,12 @@ class calculations(tk.LabelFrame):
         self.back_det_men['menu'].delete(0, 'end')
 
         # New list
-        for key in self.root.histogram['time_keys']:# Add variables to scan variable and list
-            self.back_det_men['menu'].add_command(label=key, command=tk._setit(self.back_det_men_var, key))
+        if 'time_keys' in self.root.histogram.keys():
+            for key in self.root.histogram['time_keys']:# Add variables to scan variable and list
+                self.back_det_men['menu'].add_command(label=key, command=tk._setit(self.back_det_men_var, key))
 
-            self.back_det_men_var.set(key)
-        
+                self.back_det_men_var.set(key)
+            
         self.load_calc_files()
 
         # Depletion
