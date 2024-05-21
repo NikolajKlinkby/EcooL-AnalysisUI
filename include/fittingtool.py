@@ -480,7 +480,8 @@ class fittingtool(tk.Toplevel):
                 ax1.plot(self.x,self.fit_function['f'](np.array(self.x),*param_init), label='Init')
 
             # Residuals
-            ax2.plot(self.x,self.fit.NormRes, 'o')
+            mask = (np.array(self.y_err) > 0)
+            ax2.plot(np.array(self.x)[mask],self.fit.NormRes, 'o')
 
             # Statistics
             handles, labels = ax1.get_legend_handles_labels()
@@ -585,7 +586,9 @@ class fittingtool(tk.Toplevel):
     def fit_button_func(self):
         try:
             # Covariance matrix
-            cov_y = np.diag(self.y_err)
+            mask = (np.array(self.y_err) > 0)
+
+            cov_y = np.diag(np.array(self.y_err)[mask])
 
             if self.method.get() == 'diff_evol':
                 # Read of upper and lower limits
@@ -597,8 +600,8 @@ class fittingtool(tk.Toplevel):
 
                 # Call fit
                 p0 = np.array([[float(i), float(j)] for i, j in zip(param_lower, param_upper)])
-                self.fit = FittingRoutine(self.fit_function['f'], np.array(self.x),
-                                                np.array(self.y), covy=cov_y, P0=p0,
+                self.fit = FittingRoutine(self.fit_function['f'], np.array(self.x)[mask],
+                                                np.array(self.y)[mask], covy=cov_y, P0=p0,
                                                 method=self.method.get(),
                                                 jac=self.fit_function['jac'],
                                                 hess=self.fit_function['hess'])
@@ -610,8 +613,8 @@ class fittingtool(tk.Toplevel):
 
                 # Call fit
                 p0 = np.array([float(i) for i in param_init])
-                self.fit = FittingRoutine(self.fit_function['f'], np.array(self.x),
-                                                np.array(self.y), covy=cov_y, P0=p0,
+                self.fit = FittingRoutine(self.fit_function['f'], np.array(self.x)[mask],
+                                                np.array(self.y)[mask], covy=cov_y, P0=p0,
                                                 method=self.method.get(),
                                                 jac=self.fit_function['jac'],
                                                 hess=self.fit_function['hess'])

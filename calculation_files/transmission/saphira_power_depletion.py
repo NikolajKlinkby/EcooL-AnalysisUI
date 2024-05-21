@@ -4,7 +4,7 @@
 saturation = float(self.satentry.get())
 photon = float(self.photonentry.get())
 
-edges = np.array(self.root.histogram['edges'][:-1]) + (self.root.histogram['edges'][1] + self.root.histogram['edges'][0])/2
+edges = np.array(self.root.histogram['edges'][:-1]) + (self.root.histogram['edges'][1] - self.root.histogram['edges'][0])/2
 
 # Background mask
 back_mask = np.ones(len(edges), dtype=bool)
@@ -70,7 +70,7 @@ for win in self.container.windows.entries:
 		signal.append(sig)
 		signal_err.append(variance)
 		background.append(B-B0)
-		background_err.append(B/(self.root.histogram[self.back_det_men_var.get()+'_hist_1_event_'+str(step)]+1)+B0/(self.root.histogram[self.back_det_men_var.get()+'_hist_0_event_'+str(step)]+1))
+		background_err.append(B/(self.root.histogram[self.back_det_men_var.get()+'_hist_1_event_'+str(step)]+1)**1+B0/(self.root.histogram[self.back_det_men_var.get()+'_hist_0_event_'+str(step)]+1)**1)
 
 		# With depletion
 
@@ -103,7 +103,7 @@ for win in self.container.windows.entries:
 		signal_dep.append(sig)
 		signal_dep_err.append(variance)
 		background_dep.append(B-B0)
-		background_dep_err.append(B/(self.root.histogram_deplete[self.back_det_men_var.get()+'_hist_1_event_'+str(step)]+1)+B0/(self.root.histogram_deplete[self.back_det_men_var.get()+'_hist_0_event_'+str(step)]+1))
+		background_dep_err.append(B/(self.root.histogram_deplete[self.back_det_men_var.get()+'_hist_1_event_'+str(step)]+1)**1+B0/(self.root.histogram_deplete[self.back_det_men_var.get()+'_hist_0_event_'+str(step)]+1)**1)
 
 	# Output
 	self.root.calculations[win[5].get()+':'+win[0].get()+':Yb/k'] = [np.array(signal_dep)/np.array(signal), np.array(signal_dep_err)/np.array(signal)**2+np.array(signal_err)*np.array(signal_dep)**2/np.array(signal)**4];

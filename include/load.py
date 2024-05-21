@@ -165,8 +165,11 @@ def load_data(run_folder, keys=[None], silent=False, overwrite=False, memory_lim
                                         data[line.split('\t')[0]] = float(line.split('\t')[1])
                                         data_mem += sys.getsizeof(data[line.split('\t')[0]])
                                     except:
-                                        data[line.split('\t')[0]] = line.split('\t')[1][:-1]
-                                        data_mem += sys.getsizeof(data[line.split('\t')[0]])
+                                        if len(line.split('\t')) == 1:
+                                            pass
+                                        else:
+                                            data[line.split('\t')[0]] = line.split('\t')[1][:-1]
+                                            data_mem += sys.getsizeof(data[line.split('\t')[0]])
 
                             # Start an event reading
                             elif line.split('\t')[0] == 'Event':

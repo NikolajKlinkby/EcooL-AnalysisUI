@@ -4,7 +4,7 @@
 saturation = float(self.satentry.get())
 photon = float(self.photonentry.get())
 
-edges = np.array(self.root.histogram['edges'][:-1]) + (self.root.histogram['edges'][1] + self.root.histogram['edges'][0])/2
+edges = np.array(self.root.histogram['edges'][:-1]) + (self.root.histogram['edges'][1] - self.root.histogram['edges'][0])/2
 
 # Background mask
 back_mask = np.ones(len(edges), dtype=bool)

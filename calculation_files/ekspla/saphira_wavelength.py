@@ -4,7 +4,7 @@
 saturation = float(self.satentry.get())
 photon = float(self.photonentry.get())
 
-edges = np.array(self.root.histogram['edges'][:-1]) + (self.root.histogram['edges'][1] + self.root.histogram['edges'][0])/2
+edges = np.array(self.root.histogram['edges'][:-1]) + (self.root.histogram['edges'][1] - self.root.histogram['edges'][0])/2
 
 # Background mask
 back_mask = np.ones(len(edges), dtype=bool)
@@ -16,6 +16,8 @@ scan_key = self.root.histogram['scan_key']
 all_scan_steps = np.array(self.root.parameters[self.root.histogram['scan_key']])
 scan_steps = np.unique(all_scan_steps)
 laser_pw = np.array(self.root.parameters['ADC.Laser_pw'])
+laser_on = np.array(self.root.parameters['ADC.Laser_flag']) > 1
+laser_off = np.nan_to_num(np.mean(laser_pw[np.array(self.root.parameters['ADC.Laser_flag']) <= 1]), nan=0)
 
 for win in self.container.windows.entries:
 	
@@ -36,26 +38,31 @@ for win in self.container.windows.entries:
 
 		S = np.sum(np.array(self.root.histogram[win[5].get()+'_hist_1_'+str(step)])[window_mask])
 		B = np.sum(np.array(self.root.histogram[self.back_det_men_var.get()+'_hist_1_'+str(step)])[back_mask])
-		S0 = np.sum(np.array(self.root.histogram[win[5].get()+'_hist_0_'+str(step)])[window_mask])
-		B0 = np.sum(np.array(self.root.histogram[self.back_det_men_var.get()+'_hist_0_'+str(step)])[back_mask])
+		S0 = np.sum(np.array(self.root.histogram[win[5].get()+'_hist_0_acc'])[window_mask])
+		B0 = np.sum(np.array(self.root.histogram[self.back_det_men_var.get()+'_hist_0_acc'])[back_mask])
 		
+			
 		if B == 0:
 			sig = S - S0
 			variance = S + S0
 		else:
-			sig = (S - S0 * B0 / B) / B
-			variance = S/B**2  + S**2/B**3 + 4 * (S0 * B0)**2 / B**5 + (S0 / B**2)**2 * B0 + (B0 / B**2)**2 * S0
-
+			if B0 == 0:
+				sig = S / B
+				variance = S/B**2  + S**2/B**3
+			else:
+				sig = (S - S0 * B / B0) / B
+				variance = S/B**2  + S**2/B**3 + (S0)**2 / B0**3 + 1 / B0**2
+				
 		preSignal = np.abs(sig)**(1/photon) * np.sign(sig)
 		variance = np.abs(sig)**(2/photon-2)/photon**2 * variance
 
 		# Saturation
 		if saturation > 0:
-			powerCor = saturation * (1 - np.exp( - np.mean(laser_pw[step_mask]) / saturation))
-			var_powcor = np.var(laser_pw[step_mask]) * np.exp( - 2 * np.mean(laser_pw[step_mask]) / saturation)
+			powerCor = saturation * (1 - np.exp( - np.mean(laser_pw[step_mask*laser_on]-laser_off) / saturation))
+			var_powcor = np.var(laser_pw[step_mask*laser_on]-laser_off) * np.exp( - 2 * np.mean(laser_pw[step_mask*laser_on]-laser_off) / saturation)
 		else:
-			powerCor = np.mean(laser_pw[step_mask])
-			var_powcor = np.var(laser_pw[step_mask])/(len(laser_pw[step_mask]))
+			powerCor = np.mean(laser_pw[step_mask*laser_on]-laser_off)
+			var_powcor = np.var(laser_pw[step_mask*laser_on]-laser_off)/(len(laser_pw[step_mask*laser_on]))
 
 		if powerCor == 0:
 			sig = 0

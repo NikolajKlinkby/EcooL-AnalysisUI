@@ -512,7 +512,7 @@ class results_frame(tk.LabelFrame):
         for item in self.root.tab_bar.winfo_children():
             if tab_name == self.root.tab_bar.tab(item)['text']:
                 self.root.tab_bar.select(item)
-                
+
                 self._plot_results(item)
 
                 return
@@ -718,8 +718,35 @@ class results_frame(tk.LabelFrame):
         else:
             param = np.array(self.root.parameters[self.entries[m[0]][7].get()])[index]
             
+            depletion_flag = self.root.settings['depletion_flag']
+            if depletion_flag in self.root.parameters.keys():
+                dep_params = np.array(self.root.parameters[depletion_flag])[index]
+
+                no_dep_mask = np.ones(len(dep_params), dtype=bool)
+                dep_mask = np.ones(len(dep_params), dtype=bool)
+            depletion = False
+
+            #Depletion mask
+            if self.root.histogram.keys() == self.root.histogram_deplete.keys():
+                depletion = True
+
+                mask = self.root.histogram_deplete['masks']
+                for k in mask:
+                    if k[0] == depletion_flag:
+                        dep_mask = (dep_params > float(k[1])) * (dep_params < float(k[2]))
+                        break
+               
+                mask = self.root.histogram['masks']
+                for k in mask:
+                    if k[0] == depletion_flag:
+                        no_dep_mask = (dep_params > float(k[1])) * (dep_params < float(k[2]))
+                        break
+            
             if self.entries[m[0]][9].get() == 'All':
+
                 for ind in self.index_options[1:]:
+                    
+                    # Laser mask
                     if len(self.index_options) == 5:
                         if ind == 'PumpProbe' or ind == 'i1':
                             laser_mask = np.array(self.root.parameters['ADC.Probe_on'], dtype=bool)*np.array(self.root.parameters['ADC.Pump_on'], dtype=bool)
@@ -735,7 +762,11 @@ class results_frame(tk.LabelFrame):
                             laser_mask = np.array(self.root.parameters['ADC.Laser_on'], dtype=bool)
                         elif ind == 'No laser':
                             laser_mask = np.array(self.root.parameters['ADC.Laser_off'], dtype=bool)
+                        laser_mask = laser_mask[index]
                         
+                    if depletion:
+                        _laser_mask = laser_mask
+                        laser_mask = _laser_mask*no_dep_mask
 
                     y = []
                     y_err = []
@@ -753,6 +784,26 @@ class results_frame(tk.LabelFrame):
                         ax.plot(x, y, '.', label=self.entries[m[0]][7].get()+':'+ind)
                     
                     self.root.plotdict[self.root.run_choosen+': '+self.entries[m[0]][7].get()+ ': '+ ind] = [y, y_err]
+
+                    if depletion:
+                        laser_mask = _laser_mask*dep_mask
+                        y = []
+                        y_err = []
+                        for i in range(len(start_index)):
+                            if i == len(start_index)-1:
+                                y.append(np.mean(param[start_index[i]:][laser_mask[start_index[i]:]]))
+                                y_err.append(np.var(param[start_index[i]:][laser_mask[start_index[i]:]])/len(param[start_index[i]:][laser_mask[start_index[i]:]]))
+                            else:
+                                y.append(np.mean(param[start_index[i]:start_index[i+1]][laser_mask[start_index[i]:start_index[i+1]]]))
+                                y_err.append(np.var(param[start_index[i]:start_index[i+1]][laser_mask[start_index[i]:start_index[i+1]]])/len(param[start_index[i]:start_index[i+1]][laser_mask[start_index[i]:start_index[i+1]]]))
+                        
+                        if self.entries[m[0]][10].get():
+                            ax.errorbar(x, y, np.sqrt(y_err), label=self.entries[m[0]][7].get()+':'+ind+':Dep', fmt='.', capsize=1.5)
+                        else:
+                            ax.plot(x, y, '.', label=self.entries[m[0]][7].get()+':'+ind+':Dep')
+                        
+                        self.root.plotdict[self.root.run_choosen+': '+self.entries[m[0]][7].get()+ ': '+ ind+': Dep'] = [y, y_err]
+
             else:
                 if len(self.index_options) == 5:
                     if self.entries[m[0]][9].get() == 'PumpProbe':
@@ -770,6 +821,10 @@ class results_frame(tk.LabelFrame):
                     elif self.entries[m[0]][9].get() == 'No laser':
                         laser_mask = np.array(self.root.parameters['ADC.Laser_off'], dtype=bool)
                     
+                if depletion:
+                    _laser_mask = laser_mask
+                    laser_mask = _laser_mask*no_dep_mask
+                
                 y = []
                 y_err = []
                 for i in range(len(start_index)):
@@ -786,6 +841,26 @@ class results_frame(tk.LabelFrame):
                     ax.plot(x, y, '.', label=self.entries[m[0]][7].get()+':'+self.entries[m[0]][9].get())
                 
                 self.root.plotdict[self.root.run_choosen+': '+self.entries[m[0]][7].get()+ ': '+ self.entries[m[0]][9].get()] = [y, y_err]
+
+                if depletion:
+                    laser_mask = _laser_mask*dep_mask
+
+                    y = []
+                    y_err = []
+                    for i in range(len(start_index)):
+                        if i == len(start_index)-1:
+                            y.append(np.mean(param[start_index[i]:][laser_mask[start_index[i]:]]))
+                            y_err.append(np.var(param[start_index[i]:][laser_mask[start_index[i]:]])/(len(param[start_index[i]:][laser_mask[start_index[i]:]])))
+                        else:
+                            y.append(np.mean(param[start_index[i]:start_index[i+1]][laser_mask[start_index[i]:start_index[i+1]]]))
+                            y_err.append(np.var(param[start_index[i]:start_index[i+1]][laser_mask[start_index[i]:start_index[i+1]]])/(len(param[start_index[i]:start_index[i+1]][laser_mask[start_index[i]:start_index[i+1]]])))
+                        
+                    if self.entries[m[0]][10].get():
+                        ax.errorbar(x, y, np.sqrt(y_err), label=self.entries[m[0]][7].get()+':'+self.entries[m[0]][9].get()+':Dep', fmt='.', capsize=1.5)
+                    else:
+                        ax.plot(x, y, '.', label=self.entries[m[0]][7].get()+':'+self.entries[m[0]][9].get()+':Dep')
+                    
+                    self.root.plotdict[self.root.run_choosen+': '+self.entries[m[0]][7].get()+ ': '+ self.entries[m[0]][9].get()+': Dep'] = [y, y_err]
         
         ax.axhline(0, color='k')
         ax.minorticks_on()

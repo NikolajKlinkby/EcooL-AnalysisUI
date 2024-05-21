@@ -1,0 +1,115 @@
+import numpy as np
+from include.FittingRoutine import two_exp_gauss_dist, two_exp_gauss_dist_jac, two_exp_gauss_dist_hess, two_exp_gauss_dist_hess_matrix, stack
+
+# Two-Exponential convolution with a Gaussian and two sinusudial modulations
+# Not defined for sigma / tau <= 0
+
+def f(x,a1,a2,mu,sigma,tau1,tau2,b,A,B,tauA,tauB,tA,tB,pA,pB):
+	sin1 = A*np.exp(-x/tauA)*np.sin(2*np.pi*x/tA+pA)
+	sin2 = B*np.exp(-x/tauB)*np.sin(2*np.pi*x/tB+pB)
+	return two_exp_gauss_dist(x,a1,a2,mu,sigma,1/tau1,1/tau2,b)*(1+sin1+sin2)
+	
+def jac(x,a1,a2,mu,sigma,tau1,tau2,b,A,B,tauA,tauB,tA,tB,pA,pB):
+	sin1 = A*np.exp(-x/tauA)*np.sin(2*np.pi*x/tA+pA)
+	sin2 = B*np.exp(-x/tauB)*np.sin(2*np.pi*x/tB+pB)
+	jac1 = two_exp_gauss_dist_jac(x,a1,a2,mu,sigma,1/tau1,1/tau2,b)
+	two_exp =two_exp_gauss_dist(x,a1,a2,mu,sigma,1/tau1,1/tau2,b)
+    
+	a1_deriv = jac1[0]*(1+sin1+sin2)
+	a2_deriv = jac1[1]*(1+sin1+sin2)
+	mu_deriv = jac1[2]*(1+sin1+sin2)
+	sigma_deriv = jac1[3]*(1+sin1+sin2)
+	tau1_deriv = jac1[4]*(1+sin1+sin2)
+	tau2_deriv = jac1[5]*(1+sin1+sin2)
+	b_deriv = jac1[6]*(1+sin1+sin2)
+	A_deriv = two_exp*np.exp(-x/tauA)*np.sin(2*np.pi*x/tA+pA)
+	B_deriv = two_exp*np.exp(-x/tauB)*np.sin(2*np.pi*x/tB+pB)
+	tauA_deriv = two_exp*(x/tauA**2)*sin1
+	tauB_deriv = two_exp*(x/tauB**2)*sin2
+	pA_deriv = two_exp*A*np.exp(-x/tauA)*np.cos(2*np.pi*x/tA+pA)
+	pB_deriv = two_exp*B*np.exp(-x/tauB)*np.cos(2*np.pi*x/tB+pB)
+	tA_deriv = -pA_deriv*2*np.pi*x/tA**2
+	tB_deriv = -pB_deriv*2*np.pi*x/tB**2
+
+	return np.nan_to_num(np.array([a1_deriv,a2_deriv, mu_deriv, sigma_deriv, tau1_deriv, tau2_deriv, b_deriv, A_deriv, B_deriv, tauA_deriv, tauB_deriv, tA_deriv, tB_deriv, pA_deriv, pB_deriv]), posinf=0, neginf=0)
+
+
+def hess(x,a1,a2,mu,sigma,tau1,tau2,b,A,B,tauA,tauB,tA,tB,pA,pB):
+	if isinstance(x, np.ndarray):
+		ret = hess_matrix(x[0],a1,a2,mu,sigma,tau1,tau2,b,A,B,tauA,tauB,tA,tB,pA,pB)
+		for i in range(1, len(x)):
+			ret = stack(ret, hess_matrix(x[i], a1,a2,mu,sigma,tau1,tau2,b,A,B,tauA,tauB,tA,tB,pA,pB))
+		return np.array(ret)
+	else:
+		return np.nan_to_num(hess_matrix(x,a1,a2,mu,sigma,tau1,tau2,b,A,B,tauA,tauB,tA,tB,pA,pB), posinf=0, neginf=0)
+	
+def hess_matrix(x,a1,a2,mu,sigma,tau1,tau2,b,A,B,tauA,tauB,tA,tB,pA,pB):
+	
+	sin1 = A*np.exp(-x/tauA)*np.sin(2*np.pi*x/tA+pA)
+	sin2 = B*np.exp(-x/tauB)*np.sin(2*np.pi*x/tB+pB)
+	
+	two_exp = two_exp_gauss_dist(x,a1,a2,mu,sigma,1/tau1,1/tau2,b)
+	hess1 = two_exp_gauss_dist_hess_matrix(x,a1,a2,mu,sigma,1/tau1,1/tau2,b)
+	jac1 = two_exp_gauss_dist_jac(x,a1,a2,mu,sigma,1/tau1,1/tau2,b)
+	jac2 = jac(x,a1,a2,mu,sigma,tau1,tau2,b,A,B,tauA,tauB,tA,tB,pA,pB)[7:]/two_exp
+	
+	grad_deriv_a1 = np.concatenate((hess1[0], jac1[0]*np.ones(8)*jac2))
+
+	grad_deriv_a2 = np.concatenate((hess1[1], jac1[1]*np.ones(8)*jac2))
+
+	grad_deriv_mu = np.concatenate((hess1[2], jac1[2]*np.ones(8)*jac2))
+
+	grad_deriv_sig = np.concatenate((hess1[3], jac1[3]*np.ones(8)*jac2))
+
+	grad_deriv_tau1 = np.concatenate((hess1[4], jac1[4]*np.ones(8)*jac2))
+	
+	grad_deriv_tau2 = np.concatenate((hess1[5], jac1[5]*np.ones(8)*jac2))
+
+	grad_deriv_b = np.concatenate((hess1[6], jac1[6]*np.ones(8)*jac2))
+	
+	grad_deriv_A = np.concatenate((jac1*jac2[0], two_exp*np.array([0, 0, 
+									(x/tauA**2)*np.exp(-x/tauA)*np.sin(2*np.pi*x/tA+pA), 0, 
+									np.exp(-x/tauA)*np.cos(2*np.pi*x/tA+pA)*2*np.pi*x/tA**2, 0, 
+									np.exp(-x/tauA)*np.cos(2*np.pi*x/tA+pA), 0])))
+	
+	grad_deriv_B = np.concatenate((jac1*jac2[1], two_exp*np.array([0, 0, 
+									0, (x/tauB**2)*np.exp(-x/tauB)*np.sin(2*np.pi*x/tB+pB), 
+									0, np.exp(-x/tauB)*np.cos(2*np.pi*x/tB+pB)*2*np.pi*x/tB**2, 
+									0, np.exp(-x/tauB)*np.cos(2*np.pi*x/tB+pB)])))
+									
+	grad_deriv_tauA = np.concatenate((jac1*jac2[2], two_exp*np.array([grad_deriv_A[9], 0, 
+									A*2*(-x/tauA**3+x/tauA**2)*np.exp(-x/tauA)*np.sin(2*np.pi*x/tA+pA), 0, 
+									A*x/tauA**2*np.exp(-x/tauA)*np.cos(2*np.pi*x/tA+pA)*2*np.pi*x/tA**2, 0, 
+									A*x/tauA**2*np.exp(-x/tauA)*np.cos(2*np.pi*x/tA+pA), 0])))
+									
+	grad_deriv_tauB = np.concatenate((jac1*jac2[2], two_exp*np.array([0, grad_deriv_B[10], 
+									0, B*2*(-x/tauB**3+x/tauB**2)*np.exp(-x/tauB)*np.sin(2*np.pi*x/tB+pB), 
+									0, B*x/tauB**2*np.exp(-x/tauB)*np.cos(2*np.pi*x/tB+pB)*2*np.pi*x/tB**2, 
+									0, B*x/tauB**2*np.exp(-x/tauB)*np.cos(2*np.pi*x/tB+pB)])))
+									
+	grad_deriv_tA = np.concatenate((jac1*jac2[0], two_exp*np.array([grad_deriv_A[11], 0, 
+									grad_deriv_tauA[11], 0, 
+									-A*np.exp(-x/tauA)*2*np.pi*x/tA**2*(2*1/tA*np.cos(2*np.pi*x/tA+pA)+np.sin(2*np.pi*x/tA+pA)*2*np.pi*x/tA**2), 0, 
+									-A*np.exp(-x/tauA)*np.sin(2*np.pi*x/tA+pA)*2*np.pi*x/tA**2, 0])))
+									
+	grad_deriv_tB = np.concatenate((jac1*jac2[0], two_exp*np.array([0, grad_deriv_B[12], 
+									0, grad_deriv_tauB[12],
+									0, -B*np.exp(-x/tauB)*2*np.pi*x/tB**2*(2*1/tB*np.cos(2*np.pi*x/tB+pB)+np.sin(2*np.pi*x/tB+pB)*2*np.pi*x/tB**2), 
+									0, -B*np.exp(-x/tauB)*np.sin(2*np.pi*x/tB+pB)*2*np.pi*x/tB**2])))
+									
+	grad_deriv_pA = np.concatenate((jac1*jac2[0], two_exp*np.array([grad_deriv_A[13], 0, 
+									grad_deriv_tauA[13], 0, 
+									grad_deriv_tA[13], 0, 
+									-A*np.exp(-x/tauA)*np.sin(2*np.pi*x/tA+pA), 0])))
+									
+	grad_deriv_pB = np.concatenate((jac1*jac2[0], two_exp*np.array([0, grad_deriv_B[14], 
+									0, grad_deriv_tauB[14],
+									0, grad_deriv_tB[14],
+									0, -B*np.exp(-x/tauB)*np.sin(2*np.pi*x/tB+pB)])))
+	
+	return np.array([grad_deriv_a1, grad_deriv_a2, grad_deriv_mu,
+					grad_deriv_sig, grad_deriv_tau1, grad_deriv_tau2, grad_deriv_b, 
+					grad_deriv_A,grad_deriv_B,grad_deriv_tauA,grad_deriv_tauB,grad_deriv_tA,
+					grad_deriv_tB,grad_deriv_pA,grad_deriv_pB])
+	
+	

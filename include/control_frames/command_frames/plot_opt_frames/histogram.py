@@ -228,9 +228,15 @@ class histogram(tk.LabelFrame):
                     if scan_step == 'all':
                         hist_ax.stairs(np.array(self.root.histogram[plot_key + '_hist_1_acc']), edges, label='Laser On')
                         hist_ax.stairs(np.array(self.root.histogram[plot_key + '_hist_0_acc']), edges, label='Laser Off')
+                        if (plot_key + '_hist_1_acc') in self.root.histogram_deplete.keys() and (plot_key + '_hist_0_acc') in self.root.histogram_deplete.keys():
+                            hist_ax.stairs(np.array(self.root.histogram_deplete[plot_key + '_hist_1_acc']), edges, label='Laser On Depleted')
+                            hist_ax.stairs(np.array(self.root.histogram_deplete[plot_key + '_hist_0_acc']), edges, label='Laser Off Depleted')
                     else:
                         hist_ax.stairs(np.array(self.root.histogram[plot_key + '_hist_1_' + str(scan_step)]), edges, label='Laser On')
                         hist_ax.stairs(np.array(self.root.histogram[plot_key + '_hist_0_' + str(scan_step)]), edges, label='Laser Off')
+                        if (plot_key + '_hist_1_' + str(scan_step)) in self.root.histogram_deplete.keys() and (plot_key + '_hist_0_' + str(scan_step)) in self.root.histogram_deplete.keys():
+                            hist_ax.stairs(np.array(self.root.histogram_deplete[plot_key + '_hist_1_' + str(scan_step)]), edges, label='Laser On Depleted')
+                            hist_ax.stairs(np.array(self.root.histogram_deplete[plot_key + '_hist_0_' + str(scan_step)]), edges, label='Laser Off Depleted')
                 else:
                     if scan_step == 'all':
                         hist_ax.stairs(np.array(self.root.histogram[plot_key + '_hist_1_1_acc']), edges, label='Pump Probe')
@@ -250,7 +256,7 @@ class histogram(tk.LabelFrame):
                                        -np.array(self.root.histogram[plot_key + '_hist_1_0_' + str(scan_step)])
                                        -np.array(self.root.histogram[plot_key + '_hist_0_1_' + str(scan_step)])
                                        +np.array(self.root.histogram[plot_key + '_hist_0_0_' + str(scan_step)]), edges, label='Signal')
-                
+
                 hist_ax.legend(loc=1)
                 hist_ax.axhline(0, color='k')
                 hist_ax.minorticks_on()
